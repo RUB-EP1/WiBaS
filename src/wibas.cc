@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2014  Julian Pychy                          *
+ *  Copyright (C) 2015  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -45,6 +45,7 @@
 #include "TTree.h"
 #include "TCanvas.h"
 #include "TThread.h"
+#include "TH2F.h"
 
 #ifndef __CINT__
 #include "RooGlobalFunc.h"
@@ -60,18 +61,17 @@
 #include "RooCBShape.h"
 #include "RooFFTConvPdf.h"
 #include "RooNumConvPdf.h"
-
+#include "RooProdPdf.h"
 
 const double WiBaS::Pi = 3.1415926;
 const bool WiBaS::IS_2PI_CIRCULAR = 1;
 const unsigned int WiBaS::FIT_VOIGTIAN = 1;
-const unsigned int WiBaS::FIT_NOVOSIBIRSK = 2;
-const unsigned int WiBaS::FIT_CRYSTALBALL = 3;
+
 
 
 
 WiBaS::WiBaS(double pparticleMeanMass, double pparticleWidth, 
-	   double pparticleMinMass, double pparticleMaxMass) :
+	     double pparticleMinMass, double pparticleMaxMass, bool pfit2D) :
    qout(&std::cout),
    fitFunctionType(WiBaS::FIT_VOIGTIAN),
    numNearestNeighbors(200),
@@ -82,7 +82,8 @@ WiBaS::WiBaS(double pparticleMeanMass, double pparticleWidth,
    particleWidth(pparticleWidth),
    voigtSigmaMin(particleWidth / 10.),
    voigtSigmaMax(particleWidth * 50.),
-   saveNextFitToFile(false)
+   saveNextFitToFile(false),
+   fit2D(pfit2D)
 {
    RooMsgService::instance().setSilentMode(true);
    RooMsgService::instance().setGlobalKillBelow(RooFit::FATAL);
@@ -149,12 +150,11 @@ void WiBaS::RegisterPhasespaceCoord(std::string name, double norm, bool isCircul
 void WiBaS::AddPhasespacePoint(PhasespacePoint &newPhasespacePoint)
 {
 
-   if(newPhasespacePoint.GetMass() < particleMinMass ||
-      newPhasespacePoint.GetMass() > particleMaxMass)
-   {
-      *qout << "WARNING: Attempt to add a particle outside mass range (m="
-	    << newPhasespacePoint.GetMass() << "). " 
-	    << "Rejected." << std::endl;
+   if(!CheckMassInRange(newPhasespacePoint)){
+       *qout << "WARNING: Attempt to add a particle outside mass range (m1="
+	     << newPhasespacePoint.GetMass() << ", m2="
+	     << newPhasespacePoint.GetMass2() << "). " 
+ 	     << "Rejected." << std::endl;
       return;
    }
 
@@ -240,7 +240,7 @@ WiBaS::~WiBaS()
 
 
 
-void WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
+double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
 {
    // check reference point
    try
@@ -259,15 +259,14 @@ void WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
          *qout << "ERROR: point of interest contains unknown variables."  << std::endl;
       }
       else *qout << "ERROR: unknown error" << std::endl;
-      return;
+      return 0;
    }
 
-   if(refPhasespacePoint.GetMass() < particleMinMass ||
-      refPhasespacePoint.GetMass() > particleMaxMass)
-   {
-      *qout << "WARNING: calculating weight of particle outside mass range (m="
-	    << refPhasespacePoint.GetMass() << "). " << std::endl;
-      return;
+   if(!CheckMassInRange(refPhasespacePoint)){
+	*qout << "WARNING: Attempt to calculate weight of a particle outside mass range (m1="
+	      << refPhasespacePoint.GetMass() << ", m2="
+	      << refPhasespacePoint.GetMass2() << "). " << std::endl;
+	return 0;
    }
 
    // calculate phasespace distances
@@ -298,39 +297,68 @@ void WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
 
    if(cutIndex <= 0){
       *qout << "ERROR: Too few events available for numNearestNeighbors = " << numNearestNeighbors << std::endl;
+      return 0;
    }
  
    pointMapVector.resize(cutIndex + 1);
 
    // fill roofit data
-   float newMass;
    RooRealVar mass("mass","mass", 0, particleMaxMass - particleMinMass); 
+   RooRealVar mass2("mass2","mass", 0, particleMaxMass - particleMinMass); 
    RooRealVar initialWeight("initialWeight", "initialWeight", 0);
-   RooDataSet data("data","data", RooArgSet(mass, initialWeight), RooFit::WeightVar("initialWeight"));
- 
+   RooDataSet* data;
+
+   if(fit2D){
+      data = new RooDataSet("data","data", RooArgSet(mass, mass2, initialWeight), RooFit::WeightVar("initialWeight"));
+   }
+   else{
+      data = new RooDataSet("data","data", RooArgSet(mass, initialWeight), RooFit::WeightVar("initialWeight"));
+   }
+
    std::vector<FastPointMap>::iterator it2;
    for(it2=pointMapVector.begin() + 1; it2!=pointMapVector.end(); ++it2) // skip nearest event (=ref event?, TODO: check this!)
    {
-      newMass = (*it2).phasespacePoint->GetMass() - particleMinMass;
-      mass.setVal(newMass);
-      data.add(mass, (*it2).phasespacePoint->GetInitialWeight() );
+      mass.setVal((*it2).phasespacePoint->GetMass() - particleMinMass);
+      initialWeight = (*it2).phasespacePoint->GetInitialWeight();
+
+      if(fit2D){
+         mass2.setVal((*it2).phasespacePoint->GetMass2() - particleMinMass);
+	 data->add(RooArgSet(mass, mass2, initialWeight));
+
+	 mass.setVal((*it2).phasespacePoint->GetMass2() - particleMinMass); // Symmetrization
+	 mass2.setVal((*it2).phasespacePoint->GetMass() - particleMinMass);
+	 data->add(RooArgSet(mass, mass2, initialWeight));
+      }
+      else{
+	 data->add(RooArgSet(mass, initialWeight));
+      }
    } 
 
    // Do the fit
    FitObj* fitResult;
    if(fitFunctionType == WiBaS::FIT_VOIGTIAN){
-      fitResult = DoVoigtianFit(&data, &mass, refPhasespacePoint.GetMass() - particleMinMass);
+      if(fit2D){
+	 fitResult = DoVoigtianFit(data, &mass, &mass2,
+				   refPhasespacePoint.GetMass() - particleMinMass,
+				   refPhasespacePoint.GetMass2() - particleMinMass);
+      }
+      else{
+	 fitResult = DoVoigtianFit(data, &mass, refPhasespacePoint.GetMass() - particleMinMass);
+      }
    }
    else{
       *qout << "ERROR: Selected fit function not supported" << std::endl;
-      return;
+      delete data;
+      return 0;
    }
 
+   // Check fit result
    if((fitResult->fitResult == NULL) || (fitResult->fitResult->status() != 0))
    {
       *qout << "ERROR: Fit did not converge or returned NULL pointer" << std::endl;
       delete fitResult;
-      return;
+      delete data;
+      return 0;
    }
 
    int covQual = fitResult->fitResult->covQual();
@@ -359,9 +387,10 @@ void WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
       Q = 0.0;
    }
 
-   refPhasespacePoint.SetWeight(Q);
-
    delete fitResult;
+   delete data;
+
+   return Q;
 }
 
 
@@ -422,10 +451,108 @@ FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMas
 
 
 
+FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2){
+   using namespace RooFit;
+
+   RooRealVar mean("mean","mean / MeV", particleMeanMass - particleMinMass);
+   RooRealVar sigma("sigma","sigma / MeV", voigtSigmaStart, voigtSigmaMin, voigtSigmaMax);
+   RooRealVar gamma("gamma","gamma / MeV", particleWidth);
+   RooRealVar a1("a1", "a1", 0.1, -100, 100.0);
+   RooRealVar a2("a2", "a2", 0.1, -100, 100.0);
+
+   RooArgSet bkgArgSet = (backgroundPolOrder == 2) ? RooArgSet(a1,a2) :
+                        ((backgroundPolOrder == 1) ? RooArgSet(a1) : RooArgSet());
+
+   RooVoigtian voigtFunction1("signal1", "signal1", *mass, mean, gamma, sigma);
+   RooVoigtian voigtFunction2("signal2", "signal2", *mass2, mean, gamma, sigma);
+
+   RooPolynomial polFunction1("background1","background1", *mass, bkgArgSet);
+   RooPolynomial polFunction2("background2","background2", *mass2, bkgArgSet);
+
+   RooProdPdf voigtFunction("signal", "signal", voigtFunction1, voigtFunction2);
+   RooProdPdf polFunction("background", "background", polFunction1, polFunction2);
+
+   RooRealVar sigshare("sigshare","#signal/#total", 0.5, 0, 1);
+   RooAddPdf sum("sum","s+b", RooArgList(voigtFunction, polFunction),
+                 RooArgList(sigshare));
+
+   RooFitResult* res = sum.fitTo(*data, Save(true),
+                                 Verbose(false), PrintLevel(-1), PrintEvalErrors(-1));
+
+   FitObj* returnFitObj = new FitObj;
+   returnFitObj->fitResult = res;
+
+   mass->setVal(eventMass);
+   mass2->setVal(eventMass2);
+   RooArgSet invMassArgSet(*mass, *mass2);
+
+   double R = sigshare.getVal();
+   double Vn = voigtFunction.getVal(&invMassArgSet);
+   double s = Vn * R;
+   double b = polFunction.getVal(&invMassArgSet) * (1-R);
+
+   returnFitObj->weight = s / (s + b);
+
+
+   if(saveNextFitToFile)
+   {
+      saveNextFitToFile = false;
+      TCanvas canvas("canvas", "My plots", 0, 0, 1400, 900);
+      canvas.Divide(2,2);
+
+      TH2F* histData = (TH2F*)data->createHistogram("hist", *mass,Binning(9),YVar(*mass2,Binning(9))) ;
+      canvas.cd(1);
+      histData->Draw("lego");
+
+      TH2F* histVoigt = (TH2F*)voigtFunction.createHistogram("histVoigt", *mass, Binning(100), YVar(*mass2, Binning(100)));
+      canvas.cd(2);
+      histVoigt->Draw("lego");
+
+      TH2F* histPol = (TH2F*)polFunction.createHistogram("histPol", *mass, Binning(100), YVar(*mass2, Binning(100)));
+      canvas.cd(3);
+      histPol->Draw("lego");
+
+      TH2F* histFit = (TH2F*)sum.createHistogram("histFit", *mass, Binning(100), YVar(*mass2, Binning(100)));
+      canvas.cd(4);
+      histFit->Draw("lego");
+
+      canvas.SaveAs(saveFitFileName.c_str());
+
+      delete histData;
+      delete histVoigt;
+      delete histPol;
+      delete histFit;
+   }
+
+   return returnFitObj;
+}
+
+
+
 void WiBaS::SaveNextFitToFile(std::string fileName)
 {
    saveNextFitToFile = true;
    saveFitFileName = fileName;
+}
+
+
+
+bool WiBaS::CheckMassInRange(PhasespacePoint &refPhasespacePoint){
+
+   if(refPhasespacePoint.GetMass() < particleMinMass ||
+      refPhasespacePoint.GetMass() > particleMaxMass)
+   {
+      return false;
+   }
+
+   if(fit2D && 
+      (refPhasespacePoint.GetMass2() < particleMinMass ||
+       refPhasespacePoint.GetMass2() > particleMaxMass))
+   {
+      return false;
+   }
+      
+   return true;
 }
 
 

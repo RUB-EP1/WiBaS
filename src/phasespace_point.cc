@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2013  Julian Pychy                          *
+ *  Copyright (C) 2015  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -46,9 +46,15 @@ const short int PhasespacePoint::ERR_UNKNOWN_COORDINATE = 2;
 const short int PhasespacePoint::ERR_INDEX_OVERFLOW = 3;
 
 
-PhasespaceCoord::PhasespaceCoord()
+
+PhasespaceCoord::PhasespaceCoord() :
+   id(0), 
+   isCircular(false), 
+   norm(1)
 {
+
 }
+
 
 
 PhasespaceCoord::PhasespaceCoord(unsigned short int pid, double pnorm, bool pisCircular) :
@@ -105,6 +111,13 @@ void PhasespacePoint::SetMass(double pmass)
 
 
 
+void PhasespacePoint::SetMass2(double pmass)
+{
+   mass2 = pmass;
+}
+
+
+
 double PhasespacePoint::GetMass()
 {
    return mass;
@@ -112,16 +125,9 @@ double PhasespacePoint::GetMass()
 
 
 
-double PhasespacePoint::GetWeight()
+double PhasespacePoint::GetMass2()
 {
-   return calculatedEventWeight;
-}
-
-
-
-void PhasespacePoint::SetWeight(double pweight)
-{
-   calculatedEventWeight = pweight;
+   return mass2;
 }
 
 
@@ -140,12 +146,13 @@ void PhasespacePoint::SetInitialWeight(double pweight)
 
 
 
-PhasespacePoint::PhasespacePoint()
+PhasespacePoint::PhasespacePoint() :
+  calculatedEventWeight(0.),
+  calculatedEventWeightError(0.),
+  initialWeight(1.),
+  mass(0.),
+  mass2(0.)
 {
-   calculatedEventWeight = 0.0;
-   calculatedEventWeightError = 0.0;
-   mass = 0.0;
-   initialWeight = 1.0;
 }
 
 

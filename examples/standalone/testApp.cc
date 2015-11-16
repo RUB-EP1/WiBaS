@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2014  Julian Pychy                          *
+ *  Copyright (C) 2015  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -172,8 +172,7 @@ int main(int argc, char *argv[])
       }
 
       // Finally: Get the event weight
-      wibasObj.CalcWeight(newPoint);
-
+      double Q = wibasObj.CalcWeight(newPoint);
 
       // Status update
       int processedEvents = i-firstEvent+1;
@@ -182,8 +181,8 @@ int main(int argc, char *argv[])
 		   << (float)processedEvents/(float)numEntriesInRange * 100.0 << "%)" << std::endl;
 
       // Fill histograms
-      signal->Fill(newPoint.GetMass(), newPoint.GetWeight());
-      background->Fill(newPoint.GetMass(), 1-newPoint.GetWeight());
+      signal->Fill(newPoint.GetMass(), Q);
+      background->Fill(newPoint.GetMass(), 1-Q);
       sum->Fill(newPoint.GetMass());
    }
 

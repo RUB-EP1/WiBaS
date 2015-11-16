@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2014  Julian Pychy                          *
+ *  Copyright (C) 2015  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -70,6 +70,7 @@ class WiBaS
    double voigtSigmaMax;
 
    bool saveNextFitToFile;
+   bool fit2D;
    std::string saveFitFileName;
 
    std::map< std::string, PhasespaceCoord > coordNameMap;
@@ -77,11 +78,11 @@ class WiBaS
 
    float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
    FitObj* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMass);
-   FitObj* DoCrystalBallFit(RooDataSet* data, RooRealVar* mass,  double eventMass);
+   FitObj* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2);
 
  public:
    WiBaS(double pparticleMeanMass, double pparticleWidth, 
-	double pparticleMinMass, double pparticleMaxMass);
+	 double pparticleMinMass, double pparticleMaxMass, bool pfit2D=false);
    ~WiBaS();
    void SetNearestNeighbors(unsigned int pnumNearestNeighbors);
    void SetFitFunction(unsigned int pfitFunctionType);
@@ -89,16 +90,15 @@ class WiBaS
    void SetBackgroundPolOrder(unsigned int order);
    void RegisterPhasespaceCoord(std::string name, double norm, bool isCircular=false);
    void AddPhasespacePoint(PhasespacePoint &newPhasespacePoint);
-   void CalcWeight(PhasespacePoint &refPhasespacePoint);
    void SaveNextFitToFile(std::string fileName);
    void Cleanup();
+   double CalcWeight(PhasespacePoint &refPhasespacePoint);
+   bool CheckMassInRange(PhasespacePoint &refPhasespacePoint);
 
    static const double Pi;
    static const bool IS_2PI_CIRCULAR;
    static const unsigned int FIT_VOIGTIAN;
-   static const unsigned int FIT_NOVOSIBIRSK;
-   static const unsigned int FIT_CRYSTALBALL;
-};
+ };
 
 
 

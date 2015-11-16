@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2014  Julian Pychy                          *
+ *  Copyright (C) 2015  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -72,7 +72,7 @@ int testApp()
    // Also set the order of the background polynomial
    wibasObj.SetFitFunction(WiBaS::FIT_VOIGTIAN);
    wibasObj.SetVoigtianGaussData(10., 1., 30); // start width, minimum, maximum
-   wibasObj.SetBackgroundPolOrder(1);
+   wibasObj.SetBackgroundPolOrder(2);
 
 
    // We have three relevant phasespace coordinates: the omega
@@ -123,9 +123,9 @@ int testApp()
    TH1F* background = new TH1F("background", "background", 100, omegaMass - 150, omegaMass + 150);
    TH1F* sum = new TH1F("sum", "sum", 100, omegaMass - 150, omegaMass + 150);
 
-   for(int i=0; i < numEntries; i++)
+   for(int i=1; i <= numEntries; i++)
    {
-      dataTree->GetEntry(i);
+      dataTree->GetEntry(i-1);
 
       PhasespacePoint newPoint;
       newPoint.SetCoordinate("prodTheta", prodTheta);
@@ -135,11 +135,11 @@ int testApp()
 
       // Save image for one example fit
       if(i==10){
-	 wibasObj.SaveNextFitToFile("exampleFit1.png"); 
+	 wibasObj.SaveNextFitToFile("exampleFit.png"); 
       }
 
       // Finally: Get the event weight
-      wibasObj.CalcWeight(newPoint);
+      double Q = wibasObj.CalcWeight(newPoint);
 
       // Status update
       if(i % 100 == 0){
@@ -148,8 +148,8 @@ int testApp()
       }
 
       // Fill histograms
-      signal->Fill(newPoint.GetMass(), newPoint.GetWeight());
-      background->Fill(newPoint.GetMass(), 1-newPoint.GetWeight());
+      signal->Fill(newPoint.GetMass(), Q);
+      background->Fill(newPoint.GetMass(), 1-Q);
       sum->Fill(newPoint.GetMass());
    }
 

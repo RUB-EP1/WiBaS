@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2012  Julian Pychy                          *
+ *  Copyright (C) 2015  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -68,10 +68,11 @@ class PhasespaceCoord
 class PhasespacePoint
 {
   private:
-   double mass;
-   double initialWeight;
    double calculatedEventWeight;
    double calculatedEventWeightError;
+   double initialWeight;
+   double mass;
+   double mass2;
 
   public:
     PhasespacePoint();
@@ -79,14 +80,14 @@ class PhasespacePoint
     std::map< std::string, double > coordValueMap;
  
     void SetMass(double pmass);
-    void SetWeight(double pweight);
+    void SetMass2(double pmass); 
     void SetInitialWeight(double pweight);
     void SetCoordinate(std::string pname, double pvalue);
     void ArrangeCoordinates(std::map< std::string, PhasespaceCoord >* coordNameMap);
 
     double GetCoordValue(unsigned short int id);
     double GetMass();
-    double GetWeight();
+    double GetMass2();
     double GetInitialWeight();
 
 

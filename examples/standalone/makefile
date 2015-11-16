@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -ansi
+CFLAGS = -Wall -ansi -O3
 SRCDIR = ../../src
 SOURCES = ${SRCDIR}/phasespace_point.cc ${SRCDIR}/wibas.cc testApp.cc
 OBJECTS = $(SOURCES:.cpp=.o)
