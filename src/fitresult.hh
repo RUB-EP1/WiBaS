@@ -1,8 +1,8 @@
 /**************************************************************
- *                                                            *            
+ *                                                            *
  *  WiBaS                                                     *
  *                                                            *
- *  Williams' background suppression                          *
+ *  Williams' Background Suppression                          *
  *                                                            *
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
@@ -14,7 +14,7 @@
  *                                                            *
  *  License:                                                  *
  *                                                            *
- *  This file is part of WiBaS.                               *
+ *  This file is part of WiBaS                                *
  *                                                            *
  *  WiBaS is free software: you can redistribute it and/or    *
  *  modify it under the terms of the GNU General Public       *
@@ -35,86 +35,32 @@
  *************************************************************/
 
 
+#ifndef FITOBJ_H
+#define FITOBJ_H
 
-#ifndef PHASESPACE_POINT_H
-#define PHASESPACE_POINT_H
+#include <stddef.h>
+#include "RooFitResult.h"
 
-#include <vector>
-#include <string>
-#include <map>
-
-
-
-
-
-
-class PhasespaceCoord
+class FitResult
 {
- private:
-   unsigned short int id;
-   bool isCircular;
-   double norm;
-
  public:
-   PhasespaceCoord();
-   PhasespaceCoord(unsigned short int pid, double pnorm, bool pisCircular);
-   unsigned short int GetID();
-   bool GetIsCircular();
-   double GetNorm();
-};
-
-
-
-class PhasespacePoint
-{
-  private:
-   double calculatedEventWeight;
-   double calculatedEventWeightError;
-   double initialWeight;
-   double mass;
-   double mass2;
    double weight;
    double weightError;
+   RooFitResult* rooFitResult;
 
-  public:
-    PhasespacePoint();
-    std::vector<double> coordValueVector;
-    std::map< std::string, double > coordValueMap;
- 
-    void SetMass(double pmass);
-    void SetMass2(double pmass); 
-    void SetInitialWeight(double pweight);
-    void SetCoordinate(std::string pname, double pvalue);
-    void SetWeight(double pweight);
-    void SetWeightError(double pweightError);
-    void ArrangeCoordinates(std::map< std::string, PhasespaceCoord >* coordNameMap);
 
-    double GetCoordValue(unsigned short int id);
-    double GetMass();
-    double GetMass2();
-    double GetWeight();
-    double GetWeightError();
-    double GetInitialWeight();
-  
+  FitResult():
+    weight(0),
+    weightError(0),
+    rooFitResult(NULL)
+  {}
 
-    static const short int ERR_METRIC_MISMATCH;
-    static const short int ERR_UNKNOWN_COORDINATE;
-    static const short int ERR_INDEX_OVERFLOW;
+  ~FitResult(){
+    if(rooFitResult != NULL){
+       delete rooFitResult;
+    }
+  }
 };
 
 
-
-class FastPointMap
-{
-  public:
-   FastPointMap();
-   FastPointMap(PhasespacePoint* pphasespacePoint, float pdistance);
-   PhasespacePoint* phasespacePoint;
-   float distance;
-
-   bool operator() (const FastPointMap& i, const FastPointMap& j);
-};
-
-
-
-#endif
+#endif 

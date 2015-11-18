@@ -43,10 +43,9 @@
 
 #include "phasespace_point.hh"
 
-class FitObj;
 class TThread;
 class TTree;
-class FitObj;
+class FitResult;
 class RooAbsPdf;
 class RooRealVar;
 class RooFitResult;
@@ -71,14 +70,16 @@ class WiBaS
 
    bool saveNextFitToFile;
    bool fit2D;
+   bool calcErrors;
    std::string saveFitFileName;
 
    std::map< std::string, PhasespaceCoord > coordNameMap;
    std::vector<PhasespacePoint*> phasespacePointVector;
 
    float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
-   FitObj* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMass);
-   FitObj* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2);
+   double QValue(double sig, double back, double sigshare);
+   FitResult* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMass);
+   FitResult* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2);
 
  public:
    WiBaS(double pparticleMeanMass, double pparticleWidth, 
@@ -92,7 +93,8 @@ class WiBaS
    void AddPhasespacePoint(PhasespacePoint &newPhasespacePoint);
    void SaveNextFitToFile(std::string fileName);
    void Cleanup();
-   double CalcWeight(PhasespacePoint &refPhasespacePoint);
+   void SetCalcErrors(bool set=true);
+   bool CalcWeight(PhasespacePoint &refPhasespacePoint);
    bool CheckMassInRange(PhasespacePoint &refPhasespacePoint);
 
    static const double Pi;
@@ -101,16 +103,6 @@ class WiBaS
  };
 
 
-
-class FitObj
-{
- public:
-   double weight;
-   double weightError;
-   RooFitResult* fitResult;
-
-   ~FitObj();   
-};
 
 
 

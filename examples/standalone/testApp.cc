@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 {
    int firstEvent=1;
    int lastEvent=INT_MAX;
+   bool calcErrors = false;
 
    for(int i = 0; i < argc; i++)
    {
@@ -65,6 +66,10 @@ int main(int argc, char *argv[])
       {
          std::stringstream strStream(std::string(argv[i+1]));
          strStream >> lastEvent;
+      }
+      else if(std::string(argv[i]).compare(std::string("-e")) == 0)
+      {
+	 calcErrors = true;
       }
    }
 
@@ -99,6 +104,8 @@ int main(int argc, char *argv[])
    // the maximum difference is Pi. This is the way to tell WiBaS:
    wibasObj.RegisterPhasespaceCoord("decPhi", 3.14159, WiBaS::IS_2PI_CIRCULAR);
 
+   // Switch the event error calculation on or off
+   wibasObj.SetCalcErrors(calcErrors);
 
    // Now do some root stuff to load the example data.
    TFile exampleFile("../example.root", "read");
@@ -156,7 +163,7 @@ int main(int argc, char *argv[])
    TH1F* signal = new TH1F("signal", "signal", 100, omegaMass - 150, omegaMass + 150);
    TH1F* background = new TH1F("background", "background", 100, omegaMass - 150, omegaMass + 150);
    TH1F* sum = new TH1F("sum", "sum", 100, omegaMass - 150, omegaMass + 150);
-
+ 
    for(int i=firstEvent; i <= lastEvent; i++)
    {
       dataTree->GetEntry(i-1);
@@ -172,7 +179,8 @@ int main(int argc, char *argv[])
       }
 
       // Finally: Get the event weight
-      double Q = wibasObj.CalcWeight(newPoint);
+      wibasObj.CalcWeight(newPoint);
+      double Q = newPoint.GetWeight();
 
       // Status update
       int processedEvents = i-firstEvent+1;

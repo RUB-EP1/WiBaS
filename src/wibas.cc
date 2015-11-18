@@ -36,10 +36,11 @@
 
 
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 #include "wibas.hh"
+#include "fitresult.hh"
 #include "phasespace_point.hh"
 
 #include "TTree.h"
@@ -83,7 +84,8 @@ WiBaS::WiBaS(double pparticleMeanMass, double pparticleWidth,
    voigtSigmaMin(particleWidth / 10.),
    voigtSigmaMax(particleWidth * 50.),
    saveNextFitToFile(false),
-   fit2D(pfit2D)
+   fit2D(pfit2D),
+   calcErrors(false)
 {
    RooMsgService::instance().setSilentMode(true);
    RooMsgService::instance().setGlobalKillBelow(RooFit::FATAL);
@@ -240,7 +242,7 @@ WiBaS::~WiBaS()
 
 
 
-double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
+bool WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
 {
    // check reference point
    try
@@ -259,14 +261,14 @@ double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
          *qout << "ERROR: point of interest contains unknown variables."  << std::endl;
       }
       else *qout << "ERROR: unknown error" << std::endl;
-      return 0;
+      return false;
    }
 
    if(!CheckMassInRange(refPhasespacePoint)){
 	*qout << "WARNING: Attempt to calculate weight of a particle outside mass range (m1="
 	      << refPhasespacePoint.GetMass() << ", m2="
 	      << refPhasespacePoint.GetMass2() << "). " << std::endl;
-	return 0;
+	return false;
    }
 
    // calculate phasespace distances
@@ -297,7 +299,7 @@ double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
 
    if(cutIndex <= 0){
       *qout << "ERROR: Too few events available for numNearestNeighbors = " << numNearestNeighbors << std::endl;
-      return 0;
+      return false;
    }
  
    pointMapVector.resize(cutIndex + 1);
@@ -335,7 +337,7 @@ double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
    } 
 
    // Do the fit
-   FitObj* fitResult;
+   FitResult* fitResult;
    if(fitFunctionType == WiBaS::FIT_VOIGTIAN){
       if(fit2D){
 	 fitResult = DoVoigtianFit(data, &mass, &mass2,
@@ -349,19 +351,19 @@ double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
    else{
       *qout << "ERROR: Selected fit function not supported" << std::endl;
       delete data;
-      return 0;
+      return false;
    }
 
    // Check fit result
-   if((fitResult->fitResult == NULL) || (fitResult->fitResult->status() != 0))
+   if((fitResult->rooFitResult == NULL) || (fitResult->rooFitResult->status() != 0))
    {
       *qout << "ERROR: Fit did not converge or returned NULL pointer" << std::endl;
       delete fitResult;
       delete data;
-      return 0;
+      return false;
    }
 
-   int covQual = fitResult->fitResult->covQual();
+   int covQual = fitResult->rooFitResult->covQual();
    if(covQual == 2){
       *qout << "INFO: covariance matrix forced positive-definite" << std::endl;
    }
@@ -387,15 +389,18 @@ double WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
       Q = 0.0;
    }
 
+   refPhasespacePoint.SetWeight(Q);
+   refPhasespacePoint.SetWeightError(fitResult->weightError);
+
    delete fitResult;
    delete data;
 
-   return Q;
+   return true;
 }
 
 
 
-FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMass)
+FitResult* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMass)
 {
    using namespace RooFit;
    double sumOfWeights = data->sumEntries();
@@ -414,24 +419,21 @@ FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMas
    RooAddPdf sum("sum","s+b", RooArgList(voigtFunction, polFunction),
                  RooArgList(sigshare));
 
-   RooFitResult* res = sum.fitTo(*data, Save(true), 
-				 Verbose(false), PrintLevel(-1), PrintEvalErrors(-1));
+   RooFitResult* rooFitResult = sum.fitTo(*data, Save(true), 
+					  Verbose(false), PrintLevel(-1), PrintEvalErrors(-1));
 
-   FitObj* returnFitObj = new FitObj;
-   returnFitObj->fitResult = res;  
+   FitResult* fitResult = new FitResult;
+   fitResult->rooFitResult = rooFitResult;  
 
    mass->setVal(eventMass);
    RooArgSet invMassArgSet(*mass);
    
-   double R = sigshare.getVal();
-   double Vn = voigtFunction.getVal(&invMassArgSet);
-   double s = Vn * R;
-   double b = polFunction.getVal(&invMassArgSet) * (1-R);
+   fitResult->weight = QValue(voigtFunction.getVal(&invMassArgSet),
+			       polFunction.getVal(&invMassArgSet), sigshare.getVal());
 
-   returnFitObj->weight = s / (s + b);
 
-   if(saveNextFitToFile)
-   {
+   if(saveNextFitToFile){
+      double R = sigshare.getVal();
       saveNextFitToFile = false;
       TCanvas canvas("canvas", "My plots", 0, 0, 550, 500);
       RooPlot *frame = mass->frame();
@@ -446,12 +448,50 @@ FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMas
       delete frame;
    }
 
-   return returnFitObj;
+   if(!calcErrors){
+      return fitResult;
+   }
+
+   // Error calculation
+   // Get derivatives
+   const RooArgList unorderedLocalParams(sigma, a1, a2, sigshare);
+   const RooArgList finalParams = rooFitResult->floatParsFinal();
+   const int nFreeParams = finalParams.getSize();
+   std::vector<double> derivatives;
+
+   for(int i=0; i<nFreeParams; i++){
+      RooRealVar* currentRefVar = dynamic_cast<RooRealVar*>(finalParams.at(i));              // Insert better idea to match
+      int index = unorderedLocalParams.index(currentRefVar->GetName());                      // covariances with local scoped
+      RooRealVar* currentModVar = dynamic_cast<RooRealVar*>(unorderedLocalParams.at(index)); // fit parameters
+      double epsilon = currentRefVar->getError() * 0.01;
+ 
+      currentModVar->setVal(currentRefVar->getVal() + epsilon);
+      double whigh = QValue(voigtFunction.getVal(&invMassArgSet), polFunction.getVal(&invMassArgSet), sigshare.getVal());
+
+      currentModVar->setVal(currentRefVar->getVal() - epsilon);
+      double wlow = QValue(voigtFunction.getVal(&invMassArgSet), polFunction.getVal(&invMassArgSet), sigshare.getVal());
+
+      currentModVar->setVal(currentRefVar->getVal());
+
+      derivatives.push_back((whigh - wlow) / (2. * epsilon));
+   }
+
+   // Do gaussian error propagation
+   const TMatrixDSym cov = rooFitResult->covarianceMatrix();
+   double errsq = 0;
+   for(int i=0; i<nFreeParams; i++){
+      for(int j=0; j<nFreeParams; j++){
+	 errsq += derivatives.at(i) * cov(i, j) * derivatives.at(j);
+      }
+   }
+
+   fitResult->weightError = sqrt(errsq);
+   return fitResult;
 }  
 
 
 
-FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2){
+FitResult* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2){
    using namespace RooFit;
 
    RooRealVar mean("mean","mean / MeV", particleMeanMass - particleMinMass);
@@ -476,26 +516,21 @@ FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mas
    RooAddPdf sum("sum","s+b", RooArgList(voigtFunction, polFunction),
                  RooArgList(sigshare));
 
-   RooFitResult* res = sum.fitTo(*data, Save(true),
+   RooFitResult* rooFitResult = sum.fitTo(*data, Save(true),
                                  Verbose(false), PrintLevel(-1), PrintEvalErrors(-1));
 
-   FitObj* returnFitObj = new FitObj;
-   returnFitObj->fitResult = res;
+   FitResult* fitResult = new FitResult;
+   fitResult->rooFitResult = rooFitResult;
 
    mass->setVal(eventMass);
    mass2->setVal(eventMass2);
    RooArgSet invMassArgSet(*mass, *mass2);
 
-   double R = sigshare.getVal();
-   double Vn = voigtFunction.getVal(&invMassArgSet);
-   double s = Vn * R;
-   double b = polFunction.getVal(&invMassArgSet) * (1-R);
+   fitResult->weight = QValue(voigtFunction.getVal(&invMassArgSet),
+			       polFunction.getVal(&invMassArgSet), sigshare.getVal());
 
-   returnFitObj->weight = s / (s + b);
-
-
-   if(saveNextFitToFile)
-   {
+ 
+   if(saveNextFitToFile){
       saveNextFitToFile = false;
       TCanvas canvas("canvas", "My plots", 0, 0, 1400, 900);
       canvas.Divide(2,2);
@@ -524,7 +559,45 @@ FitObj* WiBaS::DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mas
       delete histFit;
    }
 
-   return returnFitObj;
+   if(!calcErrors){
+      return fitResult;
+   }
+
+   // Error calculation
+   // Get derivatives
+   const RooArgList unorderedLocalParams(sigma, a1, a2, sigshare);
+   const RooArgList finalParams = rooFitResult->floatParsFinal();
+   const int nFreeParams = finalParams.getSize();
+   std::vector<double> derivatives;
+
+   for(int i=0; i<nFreeParams; i++){
+      RooRealVar* currentRefVar = dynamic_cast<RooRealVar*>(finalParams.at(i));
+      int index = unorderedLocalParams.index(currentRefVar->GetName());
+      RooRealVar* currentModVar = dynamic_cast<RooRealVar*>(unorderedLocalParams.at(index));
+      double epsilon = currentRefVar->getError() * 0.01;
+ 
+      currentModVar->setVal(currentRefVar->getVal() + epsilon);
+      double whigh = QValue(voigtFunction.getVal(&invMassArgSet), polFunction.getVal(&invMassArgSet), sigshare.getVal());
+
+      currentModVar->setVal(currentRefVar->getVal() - epsilon);
+      double wlow = QValue(voigtFunction.getVal(&invMassArgSet), polFunction.getVal(&invMassArgSet), sigshare.getVal());
+
+      currentModVar->setVal(currentRefVar->getVal());
+
+      derivatives.push_back((whigh - wlow) / (2. * epsilon));
+   }
+
+   // Do gaussian error propagation
+   const TMatrixDSym cov = rooFitResult->covarianceMatrix();
+   double errsq = 0;
+   for(int i=0; i<nFreeParams; i++){
+      for(int j=0; j<nFreeParams; j++){
+	 errsq += derivatives.at(i) * cov(i, j) * derivatives.at(j);
+      }
+   }
+
+   fitResult->weightError = sqrt(errsq);
+   return fitResult;
 }
 
 
@@ -557,7 +630,18 @@ bool WiBaS::CheckMassInRange(PhasespacePoint &refPhasespacePoint){
 
 
 
-FitObj::~FitObj()
-{
-   delete fitResult;
+double WiBaS::QValue(double sig, double back, double sigshare){
+
+  double s = sig * sigshare;
+  double b = back * (1 - sigshare);
+
+  return s / (s+b);
 }
+
+
+
+void WiBaS::SetCalcErrors(bool set){
+  calcErrors = set;
+}
+
+

@@ -132,6 +132,29 @@ double PhasespacePoint::GetMass2()
 
 
 
+void PhasespacePoint::SetWeight(double pweight){
+  weight = pweight;
+}
+
+
+
+void PhasespacePoint::SetWeightError(double pweightError){
+  weightError = pweightError;
+}
+
+
+
+double PhasespacePoint::GetWeight(){
+  return weight;
+}
+
+
+
+double PhasespacePoint::GetWeightError(){
+  return weightError;
+}
+
+
 double PhasespacePoint::GetInitialWeight()
 {
    return initialWeight;
@@ -151,7 +174,9 @@ PhasespacePoint::PhasespacePoint() :
   calculatedEventWeightError(0.),
   initialWeight(1.),
   mass(0.),
-  mass2(0.)
+  mass2(0.),
+  weight(0.),
+  weightError(0.)
 {
 }
 

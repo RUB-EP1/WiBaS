@@ -139,7 +139,8 @@ int testApp()
       }
 
       // Finally: Get the event weight
-      double Q = wibasObj.CalcWeight(newPoint);
+      wibasObj.CalcWeight(newPoint);
+      double Q = newPoint.GetWeight();
 
       // Status update
       if(i % 100 == 0){
