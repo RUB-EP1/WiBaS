@@ -1,8 +1,8 @@
 /**************************************************************
- *                                                            *            
+ *                                                            *
  *  WiBaS                                                     *
  *                                                            *
- *  Williams' background suppression                          *
+ *  Williams' Background Suppression                          *
  *                                                            *
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
@@ -14,7 +14,7 @@
  *                                                            *
  *  License:                                                  *
  *                                                            *
- *  This file is part of WiBaS.                               *
+ *  This file is part of WiBaS                                *
  *                                                            *
  *  WiBaS is free software: you can redistribute it and/or    *
  *  modify it under the terms of the GNU General Public       *
@@ -35,86 +35,46 @@
  *************************************************************/
 
 
+#ifndef WIBVOIGTFITFUNCTION_H
+#define WIBVOIGTFITFUNCTION_H
 
-#ifndef PHASESPACE_POINT_H
-#define PHASESPACE_POINT_H
+#include "WibFitFunction.hh"
 
-#include <vector>
-#include <string>
-#include <map>
+class RooRealVar;
+class RooVoigtian;
+class RooPolynomial;
 
-
-
-
-
-
-class PhasespaceCoord
+class WibVoigtFitFunction : public WibFitFunction
 {
- private:
-   unsigned short int id;
-   bool isCircular;
-   double norm;
+public:
+  WibVoigtFitFunction(double particleMeanMass,
+		      double particleWidth,
+		      double pminMass, 
+		      double pmaxMass,
+		      unsigned int backgroundPolOrder,
+		      double voigtSigmaStart,
+		      double voigtSigmaMin,
+		      double voigtSigmaMax);
 
- public:
-   PhasespaceCoord();
-   PhasespaceCoord(unsigned short int pid, double pnorm, bool pisCircular);
-   unsigned short int GetID();
-   bool GetIsCircular();
-   double GetNorm();
+  virtual ~WibVoigtFitFunction();
+  virtual FitResult* DoFitD(double eventMass, double eventMass2);
+
+protected:
+  virtual double ReturnCurrentQValue();
+  virtual void SaveFitToFile(std::string fileName);
+  virtual RooArgList GetParamList();
+
+private:
+  RooRealVar* mean;
+  RooRealVar* sigma;
+  RooRealVar* gamma;
+  RooRealVar* a1;
+  RooRealVar* a2;
+  RooRealVar* sigshare;
+
+  RooVoigtian* voigtFunction;
+  RooPolynomial* polFunction;
 };
-
-
-
-class PhasespacePoint
-{
-  private:
-   double calculatedEventWeight;
-   double calculatedEventWeightError;
-   double initialWeight;
-   double mass;
-   double mass2;
-   double weight;
-   double weightError;
-
-  public:
-    PhasespacePoint();
-    std::vector<double> coordValueVector;
-    std::map< std::string, double > coordValueMap;
- 
-    void SetMass(double pmass);
-    void SetMass2(double pmass); 
-    void SetInitialWeight(double pweight);
-    void SetCoordinate(std::string pname, double pvalue);
-    void SetWeight(double pweight);
-    void SetWeightError(double pweightError);
-    void ArrangeCoordinates(std::map< std::string, PhasespaceCoord >* coordNameMap);
-
-    double GetCoordValue(unsigned short int id);
-    double GetMass();
-    double GetMass2();
-    double GetWeight();
-    double GetWeightError();
-    double GetInitialWeight();
-  
-
-    static const short int ERR_METRIC_MISMATCH;
-    static const short int ERR_UNKNOWN_COORDINATE;
-    static const short int ERR_INDEX_OVERFLOW;
-};
-
-
-
-class FastPointMap
-{
-  public:
-   FastPointMap();
-   FastPointMap(PhasespacePoint* pphasespacePoint, float pdistance);
-   PhasespacePoint* phasespacePoint;
-   float distance;
-
-   bool operator() (const FastPointMap& i, const FastPointMap& j);
-};
-
 
 
 #endif

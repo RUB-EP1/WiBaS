@@ -45,12 +45,12 @@
 #include "TH1F.h"
 #include "TCanvas.h"
 
-#include "wibas.hh"
-
-
+#include "WibasCore.hh"
+#include "WibVoigtFitFunction.hh"
 
 int main(int argc, char *argv[])
 {
+   // Command line parameters
    int firstEvent=1;
    int lastEvent=INT_MAX;
    bool calcErrors = false;
@@ -77,21 +77,26 @@ int main(int argc, char *argv[])
    // Omega mass and width in MeV
    double omegaMass = 782.65;
    double omegaWidth = 8.49;
+   double range = 150;
 
 
-   // We consider a mass window of omega mass +- 150 MeV
-   WiBaS wibasObj(omegaMass, omegaWidth, omegaMass - 150, omegaMass + 150);
+   // Create a voigtian fit function with a polynomial of second order for the background
+   WibVoigtFitFunction fitFunction(omegaMass,         // Fixed nominal mass
+				   omegaWidth,        // Fixed natural width
+				   omegaMass - range, // Mass window
+				   omegaMass + range, // Mass window
+				   2,                 // Order of background polynomial 
+				   10.,               // Voigt's gaussian start width
+				   1,                 // Voigt's gaussian minimum width
+				   30);               // Voigt's gaussian maximum width
+
+
+   // Initialize the WiBaS object
+   WiBaS wibasObj(fitFunction);
    
 
    // Select the 200 nearest neighbors to determine the background
    wibasObj.SetNearestNeighbors(200);
-
-
-   // Set fit function to voigtian and set the voigtian's gauss parameters
-   // Also set the order of the background polynomial
-   wibasObj.SetFitFunction(WiBaS::FIT_VOIGTIAN);
-   wibasObj.SetVoigtianGaussData(10., 1., 30); // start width, minimum, maximum
-   wibasObj.SetBackgroundPolOrder(2);
 
 
    // We have three relevant phasespace coordinates: the omega
@@ -104,8 +109,10 @@ int main(int argc, char *argv[])
    // the maximum difference is Pi. This is the way to tell WiBaS:
    wibasObj.RegisterPhasespaceCoord("decPhi", 3.14159, WiBaS::IS_2PI_CIRCULAR);
 
+
    // Switch the event error calculation on or off
    wibasObj.SetCalcErrors(calcErrors);
+
 
    // Now do some root stuff to load the example data.
    TFile exampleFile("../example.root", "read");
@@ -136,14 +143,13 @@ int main(int argc, char *argv[])
    }
 
 
+   // Now we need to fill the WiBaS database with ALL available data
    int numTotalEntries = dataTree->GetEntries();
    int numEntriesInRange = (lastEvent - firstEvent + 1);
-
-
-   // Now we need to fill the WiBaS database with ALL available data
    for(int i=1; i<=numTotalEntries; i++)
    {
       dataTree->GetEntry(i-1);
+
 
       // Create a new point in phasespace and assign coordinates and mass
       PhasespacePoint newPoint;
@@ -151,7 +157,7 @@ int main(int argc, char *argv[])
       newPoint.SetCoordinate("decTheta", decTheta);
       newPoint.SetCoordinate("decPhi", decPhi);
       newPoint.SetMass(mass);
- 
+      newPoint.SetMass2(mass);
 
       // Add it to the WiBaS object
       wibasObj.AddPhasespacePoint(newPoint);
@@ -160,10 +166,11 @@ int main(int argc, char *argv[])
 
    // In the second run we calculate the weights of all events in the requested
    // range and fill some histograms.
-   TH1F* signal = new TH1F("signal", "signal", 100, omegaMass - 150, omegaMass + 150);
-   TH1F* background = new TH1F("background", "background", 100, omegaMass - 150, omegaMass + 150);
-   TH1F* sum = new TH1F("sum", "sum", 100, omegaMass - 150, omegaMass + 150);
- 
+   TH1F* signal = new TH1F("signal", "signal", 100, omegaMass - range, omegaMass + range);
+   TH1F* background = new TH1F("background", "background", 100, omegaMass - range, omegaMass + range);
+   TH1F* sum = new TH1F("sum", "sum", 100, omegaMass - range, omegaMass + range);
+   TH1F* errors = new TH1F("errors", "errors", 100, 0, 1);
+
    for(int i=firstEvent; i <= lastEvent; i++)
    {
       dataTree->GetEntry(i-1);
@@ -173,14 +180,19 @@ int main(int argc, char *argv[])
       newPoint.SetCoordinate("decTheta", decTheta);
       newPoint.SetCoordinate("decPhi",   decPhi);
       newPoint.SetMass(mass);
+      newPoint.SetMass2(mass);
 
+      // Save one example fit
       if(i==10){
 	 wibasObj.SaveNextFitToFile("exampleFit.png");
       }
 
+
       // Finally: Get the event weight
       wibasObj.CalcWeight(newPoint);
       double Q = newPoint.GetWeight();
+      double QErr = newPoint.GetWeightError();
+
 
       // Status update
       int processedEvents = i-firstEvent+1;
@@ -188,23 +200,28 @@ int main(int argc, char *argv[])
 	 std::cout << "Event " << processedEvents << " / " << numEntriesInRange << " (" 
 		   << (float)processedEvents/(float)numEntriesInRange * 100.0 << "%)" << std::endl;
 
+
       // Fill histograms
       signal->Fill(newPoint.GetMass(), Q);
       background->Fill(newPoint.GetMass(), 1-Q);
       sum->Fill(newPoint.GetMass());
+      errors->Fill(QErr);
    }
 
 
-
-   // Save result
-   TCanvas *cResult = new TCanvas("cResult", "cResult", 800, 600);
+   // Save result histogram
+   TCanvas *cResult = new TCanvas("cResult", "cResult", 1000, 500);
+   cResult->Divide(2,0);
+   cResult->cd(1);
    sum->SetMinimum(0);
    sum->Draw();
    signal->Draw("same");
    background->Draw("same");
    signal->SetLineColor(kBlue);
    background->SetLineColor(kRed);
-
+   cResult->cd(2);
+   errors->Draw();
+   
    std::ostringstream resultName;
    resultName << "result" << firstEvent << ".png";
    cResult->SaveAs(resultName.str().c_str());

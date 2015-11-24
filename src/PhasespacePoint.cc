@@ -37,8 +37,8 @@
 #include <iostream>
 #include <math.h>
 
-#include "phasespace_point.hh"
-#include "wibas.hh"
+#include "PhasespacePoint.hh"
+#include "WibasCore.hh"
 
 
 const short int PhasespacePoint::ERR_METRIC_MISMATCH = 1;
@@ -114,19 +114,24 @@ void PhasespacePoint::SetMass(double pmass)
 void PhasespacePoint::SetMass2(double pmass)
 {
    mass2 = pmass;
+   mass2Set = true;
 }
 
 
 
-double PhasespacePoint::GetMass()
-{
+bool PhasespacePoint::IsMass2Set() const {
+  return mass2Set;
+}
+
+
+
+double PhasespacePoint::GetMass() const {
    return mass;
 }
 
 
 
-double PhasespacePoint::GetMass2()
-{
+double PhasespacePoint::GetMass2() const {
    return mass2;
 }
 
@@ -144,19 +149,18 @@ void PhasespacePoint::SetWeightError(double pweightError){
 
 
 
-double PhasespacePoint::GetWeight(){
+double PhasespacePoint::GetWeight() const {
   return weight;
 }
 
 
 
-double PhasespacePoint::GetWeightError(){
+double PhasespacePoint::GetWeightError() const{
   return weightError;
 }
 
 
-double PhasespacePoint::GetInitialWeight()
-{
+double PhasespacePoint::GetInitialWeight() const {
    return initialWeight;
 }
 
@@ -176,7 +180,8 @@ PhasespacePoint::PhasespacePoint() :
   mass(0.),
   mass2(0.),
   weight(0.),
-  weightError(0.)
+  weightError(0.),
+  mass2Set(false)
 {
 }
 
@@ -213,8 +218,7 @@ void PhasespacePoint::ArrangeCoordinates(std::map< std::string, PhasespaceCoord 
 
 
 
-double PhasespacePoint::GetCoordValue(unsigned short int id)
-{
+double PhasespacePoint::GetCoordValue(unsigned short int id) const {
    if(id >= coordValueVector.size())
    {
       throw PhasespacePoint::ERR_INDEX_OVERFLOW;

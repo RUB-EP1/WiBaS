@@ -34,72 +34,50 @@
  *                                                            *
  *************************************************************/
 
-#ifndef WIBAS_H
-#define WIBAS_H
+#ifndef WIBASCORE_H
+#define WIBASCORE_H
 
 
 #include <string>
 #include <map>
 
-#include "phasespace_point.hh"
+#include "PhasespacePoint.hh"
 
-class TThread;
-class TTree;
 class FitResult;
 class RooAbsPdf;
 class RooRealVar;
 class RooFitResult;
 class RooDataSet;
 
-
+class WibFitFunction;
 
 class WiBaS
 {
- private:
-   std::ostream* qout;
-   unsigned int fitFunctionType;
-   unsigned int numNearestNeighbors;
-   unsigned int backgroundPolOrder;
-   double particleMeanMass;
-   double particleMinMass;
-   double particleMaxMass;
-   double particleWidth;
-   double voigtSigmaStart;
-   double voigtSigmaMin;
-   double voigtSigmaMax;
-
-   bool saveNextFitToFile;
-   bool fit2D;
-   bool calcErrors;
-   std::string saveFitFileName;
-
-   std::map< std::string, PhasespaceCoord > coordNameMap;
-   std::vector<PhasespacePoint*> phasespacePointVector;
-
-   float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
-   double QValue(double sig, double back, double sigshare);
-   FitResult* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, double eventMass);
-   FitResult* DoVoigtianFit(RooDataSet* data, RooRealVar* mass, RooRealVar* mass2, double eventMass, double eventMass2);
-
  public:
-   WiBaS(double pparticleMeanMass, double pparticleWidth, 
-	 double pparticleMinMass, double pparticleMaxMass, bool pfit2D=false);
+   WiBaS(WibFitFunction& pfitFunction);
    ~WiBaS();
    void SetNearestNeighbors(unsigned int pnumNearestNeighbors);
-   void SetFitFunction(unsigned int pfitFunctionType);
-   void SetVoigtianGaussData(double startWidth, double minWidth, double maxWidth);
-   void SetBackgroundPolOrder(unsigned int order);
    void RegisterPhasespaceCoord(std::string name, double norm, bool isCircular=false);
    void AddPhasespacePoint(PhasespacePoint &newPhasespacePoint);
    void SaveNextFitToFile(std::string fileName);
    void Cleanup();
    void SetCalcErrors(bool set=true);
    bool CalcWeight(PhasespacePoint &refPhasespacePoint);
-   bool CheckMassInRange(PhasespacePoint &refPhasespacePoint);
 
    static const double Pi;
    static const bool IS_2PI_CIRCULAR;
-   static const unsigned int FIT_VOIGTIAN;
+
+ private:
+   bool calcErrors;
+   unsigned int numNearestNeighbors;
+   std::ostream* qout;
+
+   std::map< std::string, PhasespaceCoord > coordNameMap;
+   std::vector<PhasespacePoint*> phasespacePointVector;
+   WibFitFunction* fitFunction;
+
+   float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
+   bool CheckMassInRange(PhasespacePoint &refPhasespacePoint);
  };
 
 
