@@ -72,7 +72,7 @@ WibFitFunction::~WibFitFunction()
 
 
 
-bool WibFitFunction::GetCalcError(){
+bool WibFitFunction::GetCalcError() const {
   return calcError;
 }
 
@@ -186,12 +186,12 @@ void WibFitFunction::AddData(const PhasespacePoint& phasespacePoint){
 
 
 
-double WibFitFunction::GetMinMass(){
+double WibFitFunction::GetMinMass() const {
   return minMass;
 }
 
 
 
-double WibFitFunction::GetMaxMass(){
+double WibFitFunction::GetMaxMass() const {
   return maxMass;
 }

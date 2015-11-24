@@ -77,7 +77,7 @@ class WiBaS
    WibFitFunction* fitFunction;
 
    float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
-   bool CheckMassInRange(PhasespacePoint &refPhasespacePoint);
+   bool CheckMassInRange(PhasespacePoint &refPhasespacePoint) const;
  };
 
 

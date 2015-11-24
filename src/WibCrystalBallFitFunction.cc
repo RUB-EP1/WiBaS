@@ -142,6 +142,6 @@ void WibCrystalBallFitFunction::SaveFitToFile(std::string fileName){
 
 
 
-RooArgList WibCrystalBallFitFunction::GetParamList(){
+RooArgList WibCrystalBallFitFunction::GetParamList() const {
     return RooArgList(*sigma, *a1, *a2, *sigshare, *alpha);
 }

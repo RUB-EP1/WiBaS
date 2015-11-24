@@ -56,15 +56,15 @@ public:
   void SetCalcErrors(bool set);
   void SaveNextFitToFile(std::string fileName);
   void AddData(const PhasespacePoint& phasespacePoint);
-  bool GetCalcError(); 
-  double GetMinMass();
-  double GetMaxMass();
+  bool GetCalcError() const; 
+  double GetMinMass() const;
+  double GetMaxMass() const;
   FitResult* DoFit(double eventMass, double eventMass2);
 
 protected:
   virtual double ReturnCurrentQValue()=0;
   virtual void SaveFitToFile(std::string fileName)=0;
-  virtual RooArgList GetParamList()=0;
+  virtual RooArgList GetParamList() const =0 ;
   RooRealVar* mass;
   RooRealVar* mass2;
   RooRealVar* initialWeight;

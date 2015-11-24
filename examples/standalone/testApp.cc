@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
       exit(0);
    }
 
-   TTree* dataTree = (TTree*)exampleFile.Get("exampletree");
+   TTree* dataTree = dynamic_cast<TTree*>(exampleFile.Get("exampletree"));
    float prodTheta, decTheta, decPhi, mass;
 
    dataTree->SetBranchAddress("prodTheta", &prodTheta);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
    // Get event Range. The optional range is used for
    // parallelization purposes
    firstEvent = std::max(firstEvent, 1);
-   lastEvent = std::min(lastEvent, (int)(dataTree->GetEntries()));
+   lastEvent = std::min(lastEvent, static_cast<int>((dataTree->GetEntries())));
 
    if(firstEvent >= lastEvent){
       std::cout << "ERROR: firstEvent >= lastEvent" << std::endl;
@@ -157,7 +157,6 @@ int main(int argc, char *argv[])
       newPoint.SetCoordinate("decTheta", decTheta);
       newPoint.SetCoordinate("decPhi", decPhi);
       newPoint.SetMass(mass);
-      newPoint.SetMass2(mass);
 
       // Add it to the WiBaS object
       wibasObj.AddPhasespacePoint(newPoint);
@@ -180,7 +179,6 @@ int main(int argc, char *argv[])
       newPoint.SetCoordinate("decTheta", decTheta);
       newPoint.SetCoordinate("decPhi",   decPhi);
       newPoint.SetMass(mass);
-      newPoint.SetMass2(mass);
 
       // Save one example fit
       if(i==10){

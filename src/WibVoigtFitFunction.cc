@@ -137,6 +137,6 @@ void WibVoigtFitFunction::SaveFitToFile(std::string fileName){
 
 
 
-RooArgList WibVoigtFitFunction::GetParamList(){
+RooArgList WibVoigtFitFunction::GetParamList() const {
   return RooArgList(*sigma, *a1, *a2, *sigshare);
 }

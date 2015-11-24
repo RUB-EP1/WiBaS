@@ -65,7 +65,7 @@ public:
 protected:
   virtual double ReturnCurrentQValue();
   virtual void SaveFitToFile(std::string fileName);
-  virtual RooArgList GetParamList();
+  virtual RooArgList GetParamList() const;
 
 private:
   RooRealVar* mean;
