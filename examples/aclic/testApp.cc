@@ -45,8 +45,8 @@
 #include "TH1F.h"
 #include "TCanvas.h"
 
-#include "../../src/WibasCore.hh"
-#include "../../src/WibVoigtFitFunction.hh"
+#include "WibasCore.hh"
+#include "WibVoigtFitFunction.hh"
 
 int testApp(int firstEvent=1, int lastEvent=INT_MAX, bool calcErrors=false)
 {
