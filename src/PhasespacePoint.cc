@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2015  Julian Pychy                          *
+ *  Copyright (C) 2016  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -47,204 +47,137 @@ const short int PhasespacePoint::ERR_INDEX_OVERFLOW = 3;
 
 
 
-PhasespaceCoord::PhasespaceCoord() :
-   id(0),
-   isCircular(false),
-   norm(1)
-{
 
+PhasespacePoint::PhasespacePoint() :
+    _calculatedEventWeight(0.),
+    _calculatedEventWeightError(0.),
+    _initialWeight(1.),
+    _mass(0.),
+    _mass2(0.),
+    _weight(0.),
+    _weightError(0.),
+    _mass2Set(false)
+{
 }
 
 
 
-PhasespaceCoord::PhasespaceCoord(unsigned short int pid, double pnorm, bool pisCircular) :
-   id(pid),
-   isCircular(pisCircular),
-   norm(pnorm)
+void PhasespacePoint::SetCoordinate(std::string name , double value)
 {
 
-}
+    std::pair< std::map<std::string, double>::iterator, bool > returnValue;
 
+    returnValue = coordValueMap.insert( std::pair< std::string, double >(name, value) );
 
-
-unsigned short int PhasespaceCoord::GetID() const
-{
-   return id;
-}
-
-
-
-bool PhasespaceCoord::GetIsCircular()
-{
-   return isCircular;
-}
-
-
-
-double PhasespaceCoord::GetNorm()
-{
-   return norm;
-}
-
-
-
-void PhasespacePoint::SetCoordinate(std::string pname , double pvalue)
-{
-
-   std::pair< std::map<std::string, double>::iterator, bool > returnValue;
-
-   returnValue = coordValueMap.insert( std::pair< std::string, double >(pname, pvalue) );
-
-   if(returnValue.second == false)
-   {
+    if(returnValue.second == false){
       // add exception here
-   }
-
+    }
 }
 
 
 
-void PhasespacePoint::SetMass(double pmass)
+void PhasespacePoint::SetMass(double mass)
 {
-   mass = pmass;
+    _mass = mass;
 }
 
 
 
-void PhasespacePoint::SetMass2(double pmass)
+void PhasespacePoint::SetMass2(double mass)
 {
-   mass2 = pmass;
-   mass2Set = true;
+    _mass2 = mass;
+    _mass2Set = true;
 }
 
 
 
 bool PhasespacePoint::IsMass2Set() const {
-  return mass2Set;
+    return _mass2Set;
 }
 
 
 
 double PhasespacePoint::GetMass() const {
-   return mass;
+    return _mass;
 }
 
 
 
 double PhasespacePoint::GetMass2() const {
-   return mass2;
+    return _mass2;
 }
 
 
 
-void PhasespacePoint::SetWeight(double pweight){
-  weight = pweight;
+void PhasespacePoint::SetWeight(double weight){
+    _weight = weight;
 }
 
 
 
-void PhasespacePoint::SetWeightError(double pweightError){
-  weightError = pweightError;
+void PhasespacePoint::SetWeightError(double weightError){
+    _weightError = weightError;
 }
 
 
 
 double PhasespacePoint::GetWeight() const {
-  return weight;
+    return _weight;
 }
 
 
 
 double PhasespacePoint::GetWeightError() const{
-  return weightError;
+    return _weightError;
 }
 
 
 double PhasespacePoint::GetInitialWeight() const {
-   return initialWeight;
+    return _initialWeight;
 }
 
 
 
-void PhasespacePoint::SetInitialWeight(double pweight)
+void PhasespacePoint::SetInitialWeight(double weight)
 {
-   initialWeight = pweight;
-}
-
-
-
-PhasespacePoint::PhasespacePoint() :
-  calculatedEventWeight(0.),
-  calculatedEventWeightError(0.),
-  initialWeight(1.),
-  mass(0.),
-  mass2(0.),
-  weight(0.),
-  weightError(0.),
-  mass2Set(false)
-{
+    _initialWeight = weight;
 }
 
 
 
 void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, PhasespaceCoord >& coordNameMap)
 {
-   if(coordNameMap.size() != coordValueMap.size())
-   {
-      throw PhasespacePoint::ERR_METRIC_MISMATCH;
-      return;
-   }
+    if(coordNameMap.size() != coordValueMap.size()){
+        throw PhasespacePoint::ERR_METRIC_MISMATCH;
+        return;
+    }
 
-   coordValueVector.clear();
-   coordValueVector.resize(coordValueMap.size(), 0);
+    coordValueVector.clear();
+    coordValueVector.resize(coordValueMap.size(), 0);
 
-   for(std::map< std::string, double >::iterator it = coordValueMap.begin();
-       it != coordValueMap.end(); ++it)
-   {
-      std::map< std::string, PhasespaceCoord >::const_iterator returnValue = coordNameMap.find(it->first);
+    for(std::map< std::string, double >::iterator it = coordValueMap.begin(); it != coordValueMap.end(); ++it){
+        std::map< std::string, PhasespaceCoord >::const_iterator returnValue = coordNameMap.find(it->first);
 
-      if(returnValue == coordNameMap.end())
-      {
-         throw PhasespacePoint::ERR_UNKNOWN_COORDINATE;
-         return;
-      }
+        if(returnValue == coordNameMap.end()){
+            throw PhasespacePoint::ERR_UNKNOWN_COORDINATE;
+            return;
+        }
 
-      unsigned short int id = returnValue->second.GetID();
-      coordValueVector.at(id) = it->second;
-   }
+        unsigned short int id = returnValue->second.GetID();
+        coordValueVector.at(id) = it->second;
+    }
 
-   coordValueMap.clear();
+    coordValueMap.clear();
 }
 
 
 double PhasespacePoint::GetCoordValue(unsigned short int id) const {
-   if(id >= coordValueVector.size())
-   {
-      throw PhasespacePoint::ERR_INDEX_OVERFLOW;
-      return 0.0;
-   }
-   else return coordValueVector.at(id);
+    if(id >= coordValueVector.size()){
+        throw PhasespacePoint::ERR_INDEX_OVERFLOW;
+        return 0.0;
+    }
+    else return coordValueVector.at(id);
 }
 
 
 
-FastPointMap::FastPointMap()
-{
-   phasespacePoint = NULL;
-   distance = 0.0;
-}
-
-
-
-FastPointMap::FastPointMap(PhasespacePoint* pphasespacePoint, float pdistance) :
-   phasespacePoint(pphasespacePoint),
-   distance(pdistance)
-{
-}
-
-
-
-bool FastPointMap::operator() (const FastPointMap& i, const FastPointMap& j)
-{
-   return (i.distance < j.distance);
-}

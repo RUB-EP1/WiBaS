@@ -42,7 +42,7 @@
 #include <map>
 #include <vector>
 
-#include "PhasespacePointCloud.h"
+#include "PhasespacePointCloud.hh"
 
 class FitResult;
 class RooAbsPdf;

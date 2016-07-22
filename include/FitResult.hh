@@ -7,7 +7,7 @@
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
  *                                                            *
- *  Copyright (C) 2015  Julian Pychy                          *
+ *  Copyright (C) 2016  Julian Pychy                          *
  *                                                            *
  *                                                            *
  *  Description:                                              *
@@ -63,4 +63,4 @@ class FitResult
 };
 
 
-#endif 
+#endif

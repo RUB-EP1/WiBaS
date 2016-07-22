@@ -41,7 +41,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "PhasespacePointCloud.h"
+#include "PhasespacePointCloud.hh"
 #include "PhasespacePoint.hh"
 
 

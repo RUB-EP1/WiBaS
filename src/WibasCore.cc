@@ -43,6 +43,7 @@
 #include "FitResult.hh"
 #include "PhasespacePoint.hh"
 #include "WibFitFunction.hh"
+#include "FastPointMap.hh"
 
 #include "RooMsgService.h"
 
@@ -118,7 +119,7 @@ bool WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
    int cutIndex=-1;
    double weightsum=0;
    for(unsigned int i=1; i<pointMapVector.size();i++){
-      weightsum += pointMapVector.at(i).phasespacePoint->GetInitialWeight();
+      weightsum += pointMapVector.at(i)._phasespacePoint->GetInitialWeight();
       if(weightsum >= numNearestNeighbors){
 	 cutIndex = i;
 	 break;
@@ -137,7 +138,7 @@ bool WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
    std::vector<FastPointMap>::iterator it2;
    for(it2=pointMapVector.begin() + 1; it2!=pointMapVector.end(); ++it2) // skip nearest event (=ref event?, TODO: check this!)
    {
-      fitFunction->AddData(*((*it2).phasespacePoint));
+      fitFunction->AddData(*((*it2)._phasespacePoint));
    }
 
 

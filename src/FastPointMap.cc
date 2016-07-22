@@ -2,7 +2,7 @@
  *                                                            *
  *  WiBaS                                                     *
  *                                                            *
- *  Williams' background suppression                          *
+ *  Williams' Background Suppression                          *
  *                                                            *
  *  Author: Julian Pychy                                      *
  *   email: julian@ep1.rub.de                                 *
@@ -14,7 +14,7 @@
  *                                                            *
  *  License:                                                  *
  *                                                            *
- *  This file is part of WiBaS.                               *
+ *  This file is part of WiBaS                                *
  *                                                            *
  *  WiBaS is free software: you can redistribute it and/or    *
  *  modify it under the terms of the GNU General Public       *
@@ -34,60 +34,30 @@
  *                                                            *
  *************************************************************/
 
+#include <cstddef>
 
-
-#ifndef PHASESPACE_POINT_H
-#define PHASESPACE_POINT_H
-
-#include <vector>
-#include <string>
-#include <map>
-
-#include "PhasespaceCoord.hh"
+#include "FastPointMap.hh"
 
 
 
-
-class PhasespacePoint
+FastPointMap::FastPointMap() :
+    _phasespacePoint(NULL),
+    _distance(0.0)
 {
-    public:
-        PhasespacePoint();
-        std::vector<double> coordValueVector;
-        std::map< std::string, double > coordValueMap;
-
-        void SetMass(double mass);
-        void SetMass2(double mass);
-        void SetInitialWeight(double weight);
-        void SetCoordinate(std::string name, double value);
-        void SetWeight(double weight);
-        void SetWeightError(double weightError);
-        void ArrangeCoordinates(const std::map< std::string, PhasespaceCoord >& coordNameMap);
-
-        double GetCoordValue(unsigned short int id) const;
-        double GetMass() const;
-        double GetMass2() const;
-        double GetWeight() const;
-        double GetWeightError() const;
-        double GetInitialWeight() const;
-
-        bool IsMass2Set() const;
-
-        static const short int ERR_METRIC_MISMATCH;
-        static const short int ERR_UNKNOWN_COORDINATE;
-        static const short int ERR_INDEX_OVERFLOW;
-
-    private:
-        double _calculatedEventWeight;
-        double _calculatedEventWeightError;
-        double _initialWeight;
-        double _mass;
-        double _mass2;
-        double _weight;
-        double _weightError;
-        bool _mass2Set;
-};
+}
 
 
 
+FastPointMap::FastPointMap(PhasespacePoint* phasespacePoint, float distance) :
+    _phasespacePoint(phasespacePoint),
+    _distance(distance)
+{
+}
 
-#endif
+
+
+bool FastPointMap::operator() (const FastPointMap& i, const FastPointMap& j)
+{
+    return (i._distance < j._distance);
+}
+
