@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 
 
    // Now do some root stuff to load the example data.
-   TFile exampleFile("../examples/example.root", "read");
+   TFile exampleFile("../examples/backgroundExampleData.root", "read");
    if(!exampleFile.IsOpen()){
       std::cout << "Data file not found. Execute this program inside the 'bin' directory" << std::endl;
       exit(0);

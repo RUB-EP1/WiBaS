@@ -48,6 +48,7 @@ class PhasespaceCoord
     public:
         PhasespaceCoord();
         PhasespaceCoord(unsigned short int id, double norm, bool isCircular);
+        void SetNorm(double norm);
         unsigned short int GetID() const;
         bool GetIsCircular() const;
         double GetNorm() const;

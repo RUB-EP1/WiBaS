@@ -91,7 +91,7 @@ int testApp(int firstEvent=1, int lastEvent=INT_MAX, bool calcErrors=false)
 
 
    // Now do some root stuff to load the example data.
-   TFile exampleFile("../example.root", "read");
+   TFile exampleFile("../backgroundExampleData.root", "read");
    if(!exampleFile.IsOpen()){
       std::cout << "Data file not found. Execute this program inside the 'standalone' directory" << std::endl;
       exit(0);

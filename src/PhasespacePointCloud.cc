@@ -173,3 +173,8 @@ std::vector<PhasespacePoint*>& PhasespacePointCloud::GetPointVector(int subset){
 }
 
 
+
+std::map<std::string, PhasespaceCoord>& PhasespacePointCloud::GetCoordNameMap(){
+    return _coordNameMap;
+}
+

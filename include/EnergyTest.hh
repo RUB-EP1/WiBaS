@@ -34,39 +34,55 @@
  *                                                            *
  *************************************************************/
 
-#ifndef PHASESPACEPOINTCLOUD_HH
-#define PHASESPACEPOINTCLOUD_HH
+#ifndef ENERGYTEST_HH
+#define ENERGYTEST_HH
 
-#include <string>
-#include <map>
-#include <vector>
+#include <fstream>
+#include <cmath>
+
+#include "PhasespacePointCloud.hh"
+#include "PhasespaceCoord.hh"
 
 class PhasespacePoint;
-class PhasespaceCoord;
 
-class PhasespacePointCloud
+class EnergyTest : public PhasespacePointCloud
 {
-    public:
-        PhasespacePointCloud(int numSubsets=1);
-        virtual ~PhasespacePointCloud();
-        void RegisterPhasespaceCoord(const std::string& name, double norm, bool isCircular=false);
-
-        static const double Pi;
-        static const bool IS_2PI_CIRCULAR;
-
-    protected:
-        std::ostream* _qout;
-        void AddPhasespacePoint(PhasespacePoint& newPhasespacePoint, int subset=1);
-        void ArrangePointCoordinates(PhasespacePoint& point);
-        float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
-        std::vector<PhasespacePoint*>& GetPointVector(int subset=1);
-        std::map<std::string, PhasespaceCoord>& GetCoordNameMap();
-
     private:
-        std::map< std::string, PhasespaceCoord > _coordNameMap;
-        std::vector<std::vector<PhasespacePoint*> > _phasespacePointVectors;
+        bool initialized;
+        double epsilon;
+        double gauss2sigsq;
+        short distanceFunc;
+        std::ofstream _log;
 
-        void Cleanup();
+    public:
+        EnergyTest(short distFunc, bool writelog);
+        void SetGauss2SigSq(double val){gauss2sigsq = val;}
+        double GetPhi();
+        double GetPhi(const std::vector<PhasespacePoint*>& phasespacePointVectorData,
+                     const std::vector<PhasespacePoint*>& phasespacePointVectorFit);
+        std::vector<double> GetResampledPhis(long n, short threads=1);
+        void Threadfunc(long n, std::vector<double>& phis);
+        void CalcNormsFromDistVariances();
+        double Rlog(double distance);
+        double RGauss(double distance);
+        void AddPhasespacePointData(PhasespacePoint& newPhasespacePoint);
+        void AddPhasespacePointFit(PhasespacePoint& newPhasespacePoint);
+
+        static const short DISTANCE_LOG;
+        static const short DISTANCE_GAUSS;
 };
 
-#endif // PHASESPACEPOINTCLOUD_HH
+
+
+inline double EnergyTest::Rlog(double distance){
+    return -log(distance + epsilon);
+}
+
+
+
+inline double EnergyTest::RGauss(double distance){
+    return exp(-distance*distance / gauss2sigsq);
+}
+
+
+#endif // ENERGYTEST_HH
