@@ -1,5 +1,5 @@
 /**************************************************************
- *                                                            *            
+ *                                                            *
  *  WiBaS                                                     *
  *                                                            *
  *  Williams' Background Suppression                          *
@@ -48,8 +48,8 @@ const short int PhasespacePoint::ERR_INDEX_OVERFLOW = 3;
 
 
 PhasespaceCoord::PhasespaceCoord() :
-   id(0), 
-   isCircular(false), 
+   id(0),
+   isCircular(false),
    norm(1)
 {
 
@@ -58,8 +58,8 @@ PhasespaceCoord::PhasespaceCoord() :
 
 
 PhasespaceCoord::PhasespaceCoord(unsigned short int pid, double pnorm, bool pisCircular) :
-   id(pid), 
-   isCircular(pisCircular), 
+   id(pid),
+   isCircular(pisCircular),
    norm(pnorm)
 {
 
@@ -67,7 +67,7 @@ PhasespaceCoord::PhasespaceCoord(unsigned short int pid, double pnorm, bool pisC
 
 
 
-unsigned short int PhasespaceCoord::GetID()
+unsigned short int PhasespaceCoord::GetID() const
 {
    return id;
 }
@@ -187,9 +187,9 @@ PhasespacePoint::PhasespacePoint() :
 
 
 
-void PhasespacePoint::ArrangeCoordinates(std::map< std::string, PhasespaceCoord >* coordNameMap)
+void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, PhasespaceCoord >& coordNameMap)
 {
-   if(coordNameMap->size() != coordValueMap.size())
+   if(coordNameMap.size() != coordValueMap.size())
    {
       throw PhasespacePoint::ERR_METRIC_MISMATCH;
       return;
@@ -197,16 +197,16 @@ void PhasespacePoint::ArrangeCoordinates(std::map< std::string, PhasespaceCoord 
 
    coordValueVector.clear();
    coordValueVector.resize(coordValueMap.size(), 0);
-   
-   for(std::map< std::string, double >::iterator it = coordValueMap.begin(); 
+
+   for(std::map< std::string, double >::iterator it = coordValueMap.begin();
        it != coordValueMap.end(); ++it)
    {
-      std::map< std::string, PhasespaceCoord >::iterator returnValue = coordNameMap->find(it->first);
+      std::map< std::string, PhasespaceCoord >::const_iterator returnValue = coordNameMap.find(it->first);
 
-      if(returnValue == coordNameMap->end())
+      if(returnValue == coordNameMap.end())
       {
-	 throw PhasespacePoint::ERR_UNKNOWN_COORDINATE;
-	 return;
+         throw PhasespacePoint::ERR_UNKNOWN_COORDINATE;
+         return;
       }
 
       unsigned short int id = returnValue->second.GetID();
@@ -215,7 +215,6 @@ void PhasespacePoint::ArrangeCoordinates(std::map< std::string, PhasespaceCoord 
 
    coordValueMap.clear();
 }
-
 
 
 double PhasespacePoint::GetCoordValue(unsigned short int id) const {

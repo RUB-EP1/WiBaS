@@ -1,5 +1,5 @@
 /**************************************************************
- *                                                            *            
+ *                                                            *
  *  WiBaS                                                     *
  *                                                            *
  *  Williams' background suppression                          *
@@ -58,7 +58,7 @@ class PhasespaceCoord
  public:
    PhasespaceCoord();
    PhasespaceCoord(unsigned short int pid, double pnorm, bool pisCircular);
-   unsigned short int GetID();
+   unsigned short int GetID() const;
    bool GetIsCircular();
    double GetNorm();
 };
@@ -81,14 +81,14 @@ class PhasespacePoint
     PhasespacePoint();
     std::vector<double> coordValueVector;
     std::map< std::string, double > coordValueMap;
- 
+
     void SetMass(double pmass);
-    void SetMass2(double pmass); 
+    void SetMass2(double pmass);
     void SetInitialWeight(double pweight);
     void SetCoordinate(std::string pname, double pvalue);
     void SetWeight(double pweight);
     void SetWeightError(double pweightError);
-    void ArrangeCoordinates(std::map< std::string, PhasespaceCoord >* coordNameMap);
+    void ArrangeCoordinates(const std::map< std::string, PhasespaceCoord >& coordNameMap);
 
     double GetCoordValue(unsigned short int id) const;
     double GetMass() const;
@@ -96,7 +96,7 @@ class PhasespacePoint
     double GetWeight() const;
     double GetWeightError() const;
     double GetInitialWeight() const;
-   
+
     bool IsMass2Set() const;
 
     static const short int ERR_METRIC_MISMATCH;
