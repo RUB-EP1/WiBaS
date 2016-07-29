@@ -59,10 +59,10 @@ const short EnergyTest::DISTANCE_GAUSS = 2;
 
 EnergyTest::EnergyTest(short distFunc, bool writelog) :
     PhasespacePointCloud(2),
-    initialized(false),
-    epsilon(1E-6),
-    gauss2sigsq(0.04),
-    distanceFunc(distFunc)
+    _initialized(false),
+    _epsilon(1E-6),
+    _gauss2sigsq(0.04),
+    _distanceFunc(distFunc)
 {
     std::ostringstream filename;
 
@@ -84,7 +84,7 @@ EnergyTest::EnergyTest(short distFunc, bool writelog) :
     }
     else{
         _log << "ERROR: distanceFunction does not exist";
-        distanceFunc = DISTANCE_LOG;
+        _distanceFunc = DISTANCE_LOG;
     }
 }
 
@@ -106,9 +106,8 @@ void EnergyTest::AddPhasespacePointFit(PhasespacePoint& newPhasespacePoint){
 double EnergyTest::GetPhi(const std::vector<PhasespacePoint*>& phasespacePointVectorData,
                           const std::vector<PhasespacePoint*>& phasespacePointVectorFit){
 
-    if(!initialized){
-        _log << "ERROR: not initialized\n";
-        throw;
+    if(!_initialized){
+        Initialize();
     }
 
     double sumOfWeightsData=0;
@@ -121,24 +120,24 @@ double EnergyTest::GetPhi(const std::vector<PhasespacePoint*>& phasespacePointVe
 
     for(int i=0; i<numData;i++){
 
-        sumOfWeightsData += phasespacePointVectorData[i]->GetInitialWeight();
+        sumOfWeightsData += phasespacePointVectorData.at(i)->GetInitialWeight();
 
         if(i==numData-1)
             break;
 
         for(int j=i+1; j<numData;j++){
 
-            if(distanceFunc == EnergyTest::DISTANCE_GAUSS){
-                sumRData += phasespacePointVectorData[i]->GetInitialWeight() *
-                   phasespacePointVectorData[j]->GetInitialWeight() *
-                   RGauss(CalcPhasespaceDistance(phasespacePointVectorData[i],
-                                 phasespacePointVectorData[j]));
+            if(_distanceFunc == EnergyTest::DISTANCE_GAUSS){
+                sumRData += phasespacePointVectorData.at(i)->GetInitialWeight() *
+                   phasespacePointVectorData.at(j)->GetInitialWeight() *
+                   RGauss(CalcPhasespaceDistance(phasespacePointVectorData.at(i),
+                                 phasespacePointVectorData.at(j)));
             }
-            else if(distanceFunc == EnergyTest::DISTANCE_LOG){
+            else if(_distanceFunc == EnergyTest::DISTANCE_LOG){
                 sumRData += phasespacePointVectorData[i]->GetInitialWeight() *
-                   phasespacePointVectorData[j]->GetInitialWeight() *
-                   Rlog(CalcPhasespaceDistance(phasespacePointVectorData[i],
-                               phasespacePointVectorData[j]));
+                   phasespacePointVectorData.at(j)->GetInitialWeight() *
+                   Rlog(CalcPhasespaceDistance(phasespacePointVectorData.at(i),
+                               phasespacePointVectorData.at(j)));
             }
 
         }
@@ -149,20 +148,20 @@ double EnergyTest::GetPhi(const std::vector<PhasespacePoint*>& phasespacePointVe
 
     for(int i=0; i<numFit;i++){
 
-        sumOfWeightsFit += phasespacePointVectorFit[i]->GetInitialWeight();
+        sumOfWeightsFit += phasespacePointVectorFit.at(i)->GetInitialWeight();
         for(int j=0; j<numData;j++){
 
-            if(distanceFunc == EnergyTest::DISTANCE_GAUSS){
-                sumRDataFit += phasespacePointVectorFit[i]->GetInitialWeight() *
-                   phasespacePointVectorData[j]->GetInitialWeight() *
-                   RGauss(CalcPhasespaceDistance(phasespacePointVectorFit[i],
-                                 phasespacePointVectorData[j]));
+            if(_distanceFunc == EnergyTest::DISTANCE_GAUSS){
+                sumRDataFit += phasespacePointVectorFit.at(i)->GetInitialWeight() *
+                   phasespacePointVectorData.at(j)->GetInitialWeight() *
+                   RGauss(CalcPhasespaceDistance(phasespacePointVectorFit.at(i),
+                                 phasespacePointVectorData.at(j)));
             }
-            else if(distanceFunc == EnergyTest::DISTANCE_LOG){
-                sumRDataFit += phasespacePointVectorFit[i]->GetInitialWeight() *
-                   phasespacePointVectorData[j]->GetInitialWeight() *
-                   Rlog(CalcPhasespaceDistance(phasespacePointVectorFit[i],
-                               phasespacePointVectorData[j]));
+            else if(_distanceFunc == EnergyTest::DISTANCE_LOG){
+                sumRDataFit += phasespacePointVectorFit.at(i)->GetInitialWeight() *
+                   phasespacePointVectorData.at(j)->GetInitialWeight() *
+                   Rlog(CalcPhasespaceDistance(phasespacePointVectorFit.at(i),
+                               phasespacePointVectorData.at(j)));
             }
         }
     }
@@ -186,15 +185,16 @@ double EnergyTest::GetPhi(){
 
 
 
-void EnergyTest::CalcNormsFromDistVariances(){
+void EnergyTest::Initialize(){
 
-    auto _phasespacePointVectorData = GetPointVector(1);
-    auto _phasespacePointVectorFit = GetPointVector(2);
+    auto& _phasespacePointVectorData = GetPointVector(1);
+    auto& _phasespacePointVectorFit = GetPointVector(2);
     auto& coordNameMap = GetCoordNameMap();
 
+    // Normalize the initial data weights wo a mean of 1.0
     double sumOfWeightsData = 0;
     for(auto it = _phasespacePointVectorData.begin(); it != _phasespacePointVectorData.end(); ++it){
-        sumOfWeightsData+=(*it)->GetInitialWeight();
+        sumOfWeightsData += (*it)->GetInitialWeight();
     }
 
     double scaleDataWeights = _phasespacePointVectorData.size() / sumOfWeightsData;
@@ -214,7 +214,7 @@ void EnergyTest::CalcNormsFromDistVariances(){
     }
 
 
-
+    // Calculate the distribution normalizations (roots of variances)
     for(auto it=coordNameMap.begin(); it!=coordNameMap.end();++it){
 
         int id = it->second.GetID();
@@ -226,50 +226,49 @@ void EnergyTest::CalcNormsFromDistVariances(){
         }
         meanvalue /= sumofweights;
 
-        double sigma=0;
+        double variance = 0;
         for(auto it2 = _phasespacePointVectorFit.begin(); it2 != _phasespacePointVectorFit.end(); ++it2){
-            sigma += ((*it2)->GetCoordValue(id) - meanvalue) * ((*it2)->GetCoordValue(id) - meanvalue) * (*it2)->GetInitialWeight();
+            variance += ((*it2)->GetCoordValue(id) - meanvalue) * ((*it2)->GetCoordValue(id) - meanvalue) * (*it2)->GetInitialWeight();
         }
-        sigma /= sumofweights;
-        sigma = sqrt(sigma);
+        variance /= sumofweights;
+        double norm = sqrt(variance);
 
         if(it->second.GetIsCircular() == true){
             _log << "INFO: Norm of " << (*it).first << " /= 2\n";
-            sigma /= 2.;
+            norm /= 2.;
         }
 
-        it->second.SetNorm(sigma);
-        _log << "INFO: Norm of " << (*it).first << " = " << sigma << " Mean = " << meanvalue << "\n";
+        it->second.SetNorm(norm);
+        _log << "INFO: Norm of " << (*it).first << " = " << norm << " Mean = " << meanvalue << "\n";
     }
 
+    // Calculate _epsilon from maximum weight
     double f0max=0;
     for(auto it = _phasespacePointVectorFit.begin(); it != _phasespacePointVectorFit.end(); ++it){
         double weight = (*it)->GetInitialWeight();
-        if(weight>f0max)
-        f0max = weight;
+        if(weight > f0max)
+            f0max = weight;
     }
-    epsilon = 1. / (_phasespacePointVectorFit.size() * f0max * 5.);
+    _epsilon = 1. / (_phasespacePointVectorFit.size() * f0max * 5.);
 
-    _log << "INFO: f0max = " << f0max << " epsilon = " << epsilon << "\n";
-    initialized = true;
+
+    _log << "INFO: f0max = " << f0max << " epsilon = " << _epsilon << "\n";
+    _initialized = true;
 }
 
 
 
-std::vector<double> EnergyTest::GetResampledPhis(long n, short threads){
-
-    if(!initialized){
-        _log << "ERROR: not initialized\n";
-        throw;
-    }
+std::vector<double> EnergyTest::GetResampledPhis(long n, short threads, unsigned int seed){
 
     _log << "INFO: resampling " << n << " times using " << threads << " threads\n";
 
-    ifstream f("/dev/urandom");
-    unsigned int seed;
-    f.read(reinterpret_cast<char*>(&seed), sizeof(seed));
+    if(seed == 0){
+        ifstream f("/dev/urandom");
+        f.read(reinterpret_cast<char*>(&seed), sizeof(seed));
+        f.close();
+    }
+
     srand(seed);
-    f.close();
 
     std::vector<std::thread> theThreads;
     std::vector<std::vector<double> > tPhis;
@@ -302,20 +301,24 @@ void EnergyTest::Threadfunc(long n, std::vector<double>& phis){
     auto _phasespacePointVectorData = GetPointVector(1);
     auto _phasespacePointVectorFit = GetPointVector(2);
 
-    double sumofweights = 0;
+    // Calculate sum of data weighs. The resampled distribution should
+    // yield the approximately same value
+    double sumofweightsData = 0;
     for(auto it = _phasespacePointVectorData.begin(); it != _phasespacePointVectorData.end(); ++it){
-        sumofweights+=(*it)->GetInitialWeight();
+        sumofweightsData+=(*it)->GetInitialWeight();
     }
 
     if(_phasespacePointVectorData.size() + _phasespacePointVectorFit.size() > RAND_MAX){
         std::cerr << "ERROR: RAND_MAX = " << RAND_MAX << std::endl;
+        throw;
     }
 
-    for(int i=0; i<n;i++){
+    for(int i = 0; i < n;i++){
         phasespacePointVectorFit.clear();
         phasespacePointVectorData.clear();
         phasespacePointVectorTemp.clear();
 
+        // Generate the new two datasets
         phasespacePointVectorTemp = _phasespacePointVectorFit;
         phasespacePointVectorTemp.insert(phasespacePointVectorTemp.end(), _phasespacePointVectorData.begin(),
                        _phasespacePointVectorData.end());
@@ -330,7 +333,7 @@ void EnergyTest::Threadfunc(long n, std::vector<double>& phis){
             phasespacePointVectorData.push_back(newPoint);
 
             phasespacePointVectorTemp.erase(phasespacePointVectorTemp.begin()+index);
-            if(resamplesumofweights >= sumofweights){
+            if(resamplesumofweights >= sumofweightsData){
                 break;
             }
         }
@@ -340,8 +343,10 @@ void EnergyTest::Threadfunc(long n, std::vector<double>& phis){
             phasespacePointVectorFit.push_back(newPoint);
         }
 
+        // Get the resampled phi
         phis.push_back(GetPhi(phasespacePointVectorData, phasespacePointVectorFit));
 
+        // Clean up
         for(auto it = phasespacePointVectorData.begin(); it != phasespacePointVectorData.end(); ++it){
             delete *it;
         }

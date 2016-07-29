@@ -57,23 +57,25 @@ int main(){
 
     // Create two test objects, one to test a bad "fit",
     // a second one to test a good fit
-    EnergyTest energyTest1(EnergyTest::DISTANCE_GAUSS, true);
-    EnergyTest energyTest2(EnergyTest::DISTANCE_GAUSS, true);
+    EnergyTest energyTest1(EnergyTest::DISTANCE_GAUSS);
+    EnergyTest energyTest2(EnergyTest::DISTANCE_GAUSS);
 
-    // The phasespace consists of only one variable: x. The second
-    // argument is the distance normalization which will be calculated later
-    energyTest1.RegisterPhasespaceCoord("x", 0);
-    energyTest2.RegisterPhasespaceCoord("x", 0);
+    // The phasespace consists of only one variable: x.
+    energyTest1.RegisterPhasespaceCoord("x");
+    energyTest2.RegisterPhasespaceCoord("x");
 
     // Create two data sets with size 1000 and two samples from the
     // "Fit result" with size 5000. The events are normally 
     // distributed with width 1 and mean 5, or 5.2 respectively
+    // An internal normalization to the distribution variances
+    // will be applied automatically
     int nData = 1000;
     int nFit = 5000;
     double mean1 = 5.2;
     double mean2 = 5;
     double width = 1;
 
+    // A random seed is only used for the data generation
     srand((unsigned)time(NULL));
 
     // Bad fit: the means of the two distributions differ by 0.2
@@ -112,7 +114,9 @@ int main(){
 
     // Get distribution of the test statistics using the
     // resampling technique (multithreaded)   
-    // Use only 2*50 points here to limit runtime
+    // Use only 2*50 points here to limit runtime. The GetResampledPhis
+    // method takes a random integer seed > 0 as a optional argument.
+    // If no seed is given, one is read vom /dev/urandom
     int resamplingsPerThread = 50;
     int nThreads = 2;
     std::vector<double> resampledPhi1 = energyTest1.GetResampledPhis(resamplingsPerThread, nThreads);

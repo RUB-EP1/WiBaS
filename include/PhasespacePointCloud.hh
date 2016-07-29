@@ -49,7 +49,7 @@ class PhasespacePointCloud
     public:
         PhasespacePointCloud(int numSubsets=1);
         virtual ~PhasespacePointCloud();
-        void RegisterPhasespaceCoord(const std::string& name, double norm, bool isCircular=false);
+        void RegisterPhasespaceCoord(const std::string& name, double norm=1, bool isCircular=false);
 
         static const double Pi;
         static const bool IS_2PI_CIRCULAR;

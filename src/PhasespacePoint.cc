@@ -174,8 +174,6 @@ void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, Phasespace
         unsigned short int id = returnValue->second.GetID();
         coordValueVector.at(id) = it->second;
     }
-
-    coordValueMap.clear();
 }
 
 

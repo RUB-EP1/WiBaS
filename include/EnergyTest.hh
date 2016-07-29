@@ -48,21 +48,22 @@ class PhasespacePoint;
 class EnergyTest : public PhasespacePointCloud
 {
     private:
-        bool initialized;
-        double epsilon;
-        double gauss2sigsq;
-        short distanceFunc;
+        bool _initialized;
+        double _epsilon;
+        double _gauss2sigsq;
+        short _distanceFunc;
         std::ofstream _log;
 
+        void Initialize();
+
     public:
-        EnergyTest(short distFunc, bool writelog);
-        void SetGauss2SigSq(double val){gauss2sigsq = val;}
+        EnergyTest(short distFunc, bool writelog=true);
+        void SetGauss2SigSq(double val){ _gauss2sigsq = val; }
         double GetPhi();
         double GetPhi(const std::vector<PhasespacePoint*>& phasespacePointVectorData,
                       const std::vector<PhasespacePoint*>& phasespacePointVectorFit);
-        std::vector<double> GetResampledPhis(long n, short threads=1);
+        std::vector<double> GetResampledPhis(long n, short threads=1, unsigned int seed=0);
         void Threadfunc(long n, std::vector<double>& phis);
-        void CalcNormsFromDistVariances();
         double Rlog(double distance);
         double RGauss(double distance);
         void AddPhasespacePointData(PhasespacePoint& newPhasespacePoint);
@@ -76,14 +77,14 @@ class EnergyTest : public PhasespacePointCloud
 
 inline double EnergyTest::Rlog(double distance){
 
-    return -log(distance + epsilon);
+    return -log(distance + _epsilon);
 }
 
 
 
 inline double EnergyTest::RGauss(double distance){
 
-    return exp(-distance*distance / gauss2sigsq);
+    return exp(-distance*distance / _gauss2sigsq);
 }
 
 

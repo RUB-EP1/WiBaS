@@ -63,7 +63,6 @@ class WiBaS : public PhasespacePointCloud
         bool CalcWeight(PhasespacePoint &refPhasespacePoint);
 
     private:
-        bool calcErrors;
         unsigned int numNearestNeighbors;
         WibFitFunction* fitFunction;
         bool CheckMassInRange(PhasespacePoint &refPhasespacePoint) const;

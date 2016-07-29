@@ -51,7 +51,6 @@
 
 WiBaS::WiBaS(WibFitFunction& pfitFunction) :
     PhasespacePointCloud(1),
-    calcErrors(false),
     numNearestNeighbors(200),
     fitFunction(&pfitFunction)
 {
@@ -215,7 +214,6 @@ bool WiBaS::CheckMassInRange(PhasespacePoint &refPhasespacePoint) const {
 
 void WiBaS::SetCalcErrors(bool set){
 
-    calcErrors = set;
     fitFunction->SetCalcErrors(set);
 }
 
