@@ -46,34 +46,34 @@ class RooPolynomial;
 
 class WibVoigtFitFunction : public WibFitFunction
 {
-public:
-  WibVoigtFitFunction(double particleMeanMass,
-		      double particleWidth,
-		      double pminMass, 
-		      double pmaxMass,
-		      unsigned int backgroundPolOrder,
-		      double voigtSigmaStart,
-		      double voigtSigmaMin,
-		      double voigtSigmaMax);
+    public:
+        WibVoigtFitFunction(double particleMeanMass,
+                            double particleWidth,
+                            double pminMass,
+                            double pmaxMass,
+                            unsigned int backgroundPolOrder,
+                            double voigtSigmaStart,
+                            double voigtSigmaMin,
+                            double voigtSigmaMax);
 
-  virtual ~WibVoigtFitFunction();
-  virtual FitResult* DoFitD(double eventMass, double eventMass2);
+        virtual ~WibVoigtFitFunction();
+        virtual FitResult* DoFitD(double eventMass, double eventMass2);
 
-protected:
-  virtual double ReturnCurrentQValue();
-  virtual void SaveFitToFile(std::string fileName);
-  virtual RooArgList GetParamList() const;
+    protected:
+        virtual double ReturnCurrentQValue();
+        virtual void SaveFitToFile(std::string fileName);
+        virtual RooArgList GetParamList() const;
 
-private:
-  RooRealVar* mean;
-  RooRealVar* sigma;
-  RooRealVar* gamma;
-  RooRealVar* a1;
-  RooRealVar* a2;
-  RooRealVar* sigshare;
+    private:
+        RooRealVar* mean;
+        RooRealVar* sigma;
+        RooRealVar* gamma;
+        RooRealVar* a1;
+        RooRealVar* a2;
+        RooRealVar* sigshare;
 
-  RooVoigtian* voigtFunction;
-  RooPolynomial* polFunction;
+        RooVoigtian* voigtFunction;
+        RooPolynomial* polFunction;
 };
 
 

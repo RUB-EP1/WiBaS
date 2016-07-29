@@ -56,8 +56,8 @@ FastPointMap::FastPointMap(PhasespacePoint* phasespacePoint, float distance) :
 
 
 
-bool FastPointMap::operator() (const FastPointMap& i, const FastPointMap& j)
-{
+bool FastPointMap::operator() (const FastPointMap& i, const FastPointMap& j){
+
     return (i._distance < j._distance);
 }
 

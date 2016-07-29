@@ -62,15 +62,15 @@ PhasespacePointCloud::PhasespacePointCloud(int numSubsets) :
 
 
 
-PhasespacePointCloud::~PhasespacePointCloud()
-{
+PhasespacePointCloud::~PhasespacePointCloud(){
+
     Cleanup();
 }
 
 
 
-void PhasespacePointCloud::Cleanup()
-{
+void PhasespacePointCloud::Cleanup(){
+
     std::vector<std::vector<PhasespacePoint*> >::iterator it1 = _phasespacePointVectors.begin();
 
     for(it1 = _phasespacePointVectors.begin(); it1 != _phasespacePointVectors.end(); ++it1){
@@ -87,8 +87,8 @@ void PhasespacePointCloud::Cleanup()
 
 
 
-void PhasespacePointCloud::RegisterPhasespaceCoord(const std::string& name, double norm, bool isCircular)
-{
+void PhasespacePointCloud::RegisterPhasespaceCoord(const std::string& name, double norm, bool isCircular){
+
     unsigned short int newID = _coordNameMap.size();
     PhasespaceCoord newCoord(newID, norm, isCircular);
 
@@ -102,8 +102,8 @@ void PhasespacePointCloud::RegisterPhasespaceCoord(const std::string& name, doub
 }
 
 
-void PhasespacePointCloud::AddPhasespacePoint(PhasespacePoint &newPhasespacePoint, int subset)
-{
+void PhasespacePointCloud::AddPhasespacePoint(PhasespacePoint &newPhasespacePoint, int subset){
+
     ArrangePointCoordinates(newPhasespacePoint);
 
     PhasespacePoint* copiedPhasespacePoint = new PhasespacePoint(newPhasespacePoint);
@@ -141,6 +141,7 @@ float PhasespacePointCloud::CalcPhasespaceDistance(PhasespacePoint* targetPoint,
     std::map< std::string, PhasespaceCoord>::iterator it;
 
     for(it=_coordNameMap.begin(); it!=_coordNameMap.end();++it){
+
         unsigned short int id = it->second.GetID();
         double norm = it->second.GetNorm();
 
@@ -169,12 +170,14 @@ float PhasespacePointCloud::CalcPhasespaceDistance(PhasespacePoint* targetPoint,
 
 
 std::vector<PhasespacePoint*>& PhasespacePointCloud::GetPointVector(int subset){
+
     return _phasespacePointVectors.at(subset-1);
 }
 
 
 
 std::map<std::string, PhasespaceCoord>& PhasespacePointCloud::GetCoordNameMap(){
+
     return _coordNameMap;
 }
 

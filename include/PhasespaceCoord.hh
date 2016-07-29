@@ -37,7 +37,6 @@
 #ifndef PHASESPACECOORD_HH
 #define PHASESPACECOORD_HH
 
-
 class PhasespaceCoord
 {
     private:

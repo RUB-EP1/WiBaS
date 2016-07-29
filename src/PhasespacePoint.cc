@@ -62,8 +62,7 @@ PhasespacePoint::PhasespacePoint() :
 
 
 
-void PhasespacePoint::SetCoordinate(std::string name , double value)
-{
+void PhasespacePoint::SetCoordinate(std::string name , double value){
 
     std::pair< std::map<std::string, double>::iterator, bool > returnValue;
 
@@ -76,15 +75,15 @@ void PhasespacePoint::SetCoordinate(std::string name , double value)
 
 
 
-void PhasespacePoint::SetMass(double mass)
-{
+void PhasespacePoint::SetMass(double mass){
+
     _mass = mass;
 }
 
 
 
-void PhasespacePoint::SetMass2(double mass)
-{
+void PhasespacePoint::SetMass2(double mass){
+
     _mass2 = mass;
     _mass2Set = true;
 }
@@ -92,61 +91,69 @@ void PhasespacePoint::SetMass2(double mass)
 
 
 bool PhasespacePoint::IsMass2Set() const {
+
     return _mass2Set;
 }
 
 
 
 double PhasespacePoint::GetMass() const {
+
     return _mass;
 }
 
 
 
 double PhasespacePoint::GetMass2() const {
+
     return _mass2;
 }
 
 
 
 void PhasespacePoint::SetWeight(double weight){
+
     _weight = weight;
 }
 
 
 
 void PhasespacePoint::SetWeightError(double weightError){
+
     _weightError = weightError;
 }
 
 
 
 double PhasespacePoint::GetWeight() const {
+
     return _weight;
 }
 
 
 
 double PhasespacePoint::GetWeightError() const{
+
     return _weightError;
 }
 
 
 double PhasespacePoint::GetInitialWeight() const {
+
     return _initialWeight;
 }
 
 
 
-void PhasespacePoint::SetInitialWeight(double weight)
-{
+void PhasespacePoint::SetInitialWeight(double weight){
+
     _initialWeight = weight;
 }
 
 
 
-void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, PhasespaceCoord >& coordNameMap)
-{
+void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, PhasespaceCoord >& coordNameMap){
+
     if(coordNameMap.size() != coordValueMap.size()){
         throw PhasespacePoint::ERR_METRIC_MISMATCH;
         return;
@@ -156,6 +163,7 @@ void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, Phasespace
     coordValueVector.resize(coordValueMap.size(), 0);
 
     for(std::map< std::string, double >::iterator it = coordValueMap.begin(); it != coordValueMap.end(); ++it){
+
         std::map< std::string, PhasespaceCoord >::const_iterator returnValue = coordNameMap.find(it->first);
 
         if(returnValue == coordNameMap.end()){
@@ -172,11 +180,13 @@ void PhasespacePoint::ArrangeCoordinates(const std::map< std::string, Phasespace
 
 
 double PhasespacePoint::GetCoordValue(unsigned short int id) const {
+
     if(id >= coordValueVector.size()){
         throw PhasespacePoint::ERR_INDEX_OVERFLOW;
         return 0.0;
     }
-    else return coordValueVector.at(id);
+    else
+        return coordValueVector.at(id);
 }
 
 

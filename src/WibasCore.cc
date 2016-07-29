@@ -49,7 +49,6 @@
 
 
 
-
 WiBaS::WiBaS(WibFitFunction& pfitFunction) :
     PhasespacePointCloud(1),
     calcErrors(false),
@@ -62,15 +61,14 @@ WiBaS::WiBaS(WibFitFunction& pfitFunction) :
 
 
 
-void WiBaS::SetNearestNeighbors(unsigned int pnumNearestNeighbors)
-{
-   numNearestNeighbors = pnumNearestNeighbors;
+void WiBaS::SetNearestNeighbors(unsigned int pnumNearestNeighbors){
+
+    numNearestNeighbors = pnumNearestNeighbors;
 }
 
 
 
-void WiBaS::AddPhasespacePoint(PhasespacePoint& newPhasespacePoint)
-{
+void WiBaS::AddPhasespacePoint(PhasespacePoint& newPhasespacePoint){
 
     if(!CheckMassInRange(newPhasespacePoint)){
         *_qout << "WARNING: Attempt to add a particle outside mass range (m1="
@@ -85,139 +83,140 @@ void WiBaS::AddPhasespacePoint(PhasespacePoint& newPhasespacePoint)
 
 
 
-bool WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint)
-{
-   ArrangePointCoordinates(refPhasespacePoint);
+bool WiBaS::CalcWeight(PhasespacePoint &refPhasespacePoint){
 
-   if(!CheckMassInRange(refPhasespacePoint)){
-	*_qout << "WARNING: Attempt to calculate weight of a particle outside mass range (m1="
-	      << refPhasespacePoint.GetMass() << ", m2="
-	      << refPhasespacePoint.GetMass2() << "). " << std::endl;
-	return false;
-   }
+    ArrangePointCoordinates(refPhasespacePoint);
 
-
-   // calculate phasespace distances
-   std::vector<FastPointMap> pointMapVector;
-   std::vector<PhasespacePoint*>::iterator it;
-   std::vector<PhasespacePoint*> phasespacePointVector = GetPointVector();
+    if(!CheckMassInRange(refPhasespacePoint)){
+        *_qout << "WARNING: Attempt to calculate weight of a particle outside mass range (m1="
+               << refPhasespacePoint.GetMass() << ", m2="
+               << refPhasespacePoint.GetMass2() << "). " << std::endl;
+        return false;
+    }
 
 
-   for (it=phasespacePointVector.begin(); it!=phasespacePointVector.end(); ++it){
-      FastPointMap newMapEntry((*it), CalcPhasespaceDistance((*it), &refPhasespacePoint));
-      pointMapVector.push_back(newMapEntry);
-   }
+    // calculate phasespace distances
+    std::vector<FastPointMap> pointMapVector;
+    std::vector<PhasespacePoint*>::iterator it;
+    std::vector<PhasespacePoint*> phasespacePointVector = GetPointVector();
 
 
-   // sort list
-   FastPointMap compHelper(NULL, 0);
-   std::sort(pointMapVector.begin(),
-   	     pointMapVector.end(), compHelper);
+    for (it=phasespacePointVector.begin(); it!=phasespacePointVector.end(); ++it){
+        FastPointMap newMapEntry((*it), CalcPhasespaceDistance((*it), &refPhasespacePoint));
+        pointMapVector.push_back(newMapEntry);
+    }
 
 
-   // Cut vector
-   int cutIndex=-1;
-   double weightsum=0;
-   for(unsigned int i=1; i<pointMapVector.size();i++){
-      weightsum += pointMapVector.at(i)._phasespacePoint->GetInitialWeight();
-      if(weightsum >= numNearestNeighbors){
-	 cutIndex = i;
-	 break;
-      }
-   }
+    // sort list
+    FastPointMap compHelper(NULL, 0);
+    std::sort(pointMapVector.begin(), pointMapVector.end(), compHelper);
 
-   if(cutIndex <= 0){
-      *_qout << "ERROR: Too few events available for numNearestNeighbors = " << numNearestNeighbors << std::endl;
-      return false;
-   }
+
+    // Cut vector
+    int cutIndex=-1;
+    double weightsum=0;
+
+    for(unsigned int i=1; i<pointMapVector.size();i++){
+
+        weightsum += pointMapVector.at(i)._phasespacePoint->GetInitialWeight();
+
+        if(weightsum >= numNearestNeighbors){
+            cutIndex = i;
+            break;
+        }
+    }
+
+    if(cutIndex <= 0){
+        *_qout << "ERROR: Too few events available for numNearestNeighbors = " << numNearestNeighbors << std::endl;
+        return false;
+    }
 
    pointMapVector.resize(cutIndex + 1);
 
 
-   // Fill the fit function with the neighbor data
-   std::vector<FastPointMap>::iterator it2;
-   for(it2=pointMapVector.begin() + 1; it2!=pointMapVector.end(); ++it2) // skip nearest event (=ref event?, TODO: check this!)
-   {
-      fitFunction->AddData(*((*it2)._phasespacePoint));
-   }
+    // Fill the fit function with the neighbor data
+    std::vector<FastPointMap>::iterator it2;
+    for(it2=pointMapVector.begin() + 1; it2!=pointMapVector.end(); ++it2) // skip nearest event (=ref event?, TODO: check this!)
+    {
+        fitFunction->AddData(*((*it2)._phasespacePoint));
+    }
 
 
-   // Do the fit
-   FitResult* fitResult = fitFunction->DoFit(refPhasespacePoint.GetMass(),  refPhasespacePoint.GetMass2());
+    // Do the fit
+    FitResult* fitResult = fitFunction->DoFit(refPhasespacePoint.GetMass(),  refPhasespacePoint.GetMass2());
 
 
-   // Check fit result
-   if((fitResult == NULL) ||
-      (fitResult->rooFitResult == NULL) || (fitResult->rooFitResult->status() != 0)){
-      *_qout << "ERROR: Fit did not converge or returned NULL pointer" << std::endl;
-      delete fitResult;
-      return false;
-   }
+    // Check fit result
+    if((fitResult == NULL) || (fitResult->rooFitResult == NULL) || (fitResult->rooFitResult->status() != 0)){
+        *_qout << "ERROR: Fit did not converge or returned NULL pointer" << std::endl;
+        delete fitResult;
+        return false;
+    }
 
-   int covQual = fitResult->rooFitResult->covQual();
-   if(covQual == 2){
-      *_qout << "INFO: covariance matrix forced positive-definite" << std::endl;
-   }
-   else if(covQual == 1){
-      *_qout << "WARNING: covariance matrix not accurate" << std::endl;
-   }
-   else if(covQual != 3){
-      *_qout << "WARNING: covQual = " << covQual << std::endl;
-   }
+    int covQual = fitResult->rooFitResult->covQual();
+
+    if(covQual == 2){
+        *_qout << "INFO: covariance matrix forced positive-definite" << std::endl;
+    }
+    else if(covQual == 1){
+        *_qout << "WARNING: covariance matrix not accurate" << std::endl;
+    }
+    else if(covQual != 3){
+        *_qout << "WARNING: covQual = " << covQual << std::endl;
+    }
 
 
-   //Get weight at m0
-   double Q = fitResult->weight;
+    //Get weight at m0
+    double Q = fitResult->weight;
 
-   if(Q > 1) {
-      *_qout << "WARNING: Q > 1. Setting Q = 1." << std::endl;
-      Q = 1.0;
-   }
-   else if(Q < 0){
-      *_qout << "WARNING: Q < 0. Setting Q = 0." << std::endl;
-      Q = 0.0;
-   }
+    if(Q > 1) {
+        *_qout << "WARNING: Q > 1. Setting Q = 1." << std::endl;
+        Q = 1.0;
+    }
+    else if(Q < 0){
+        *_qout << "WARNING: Q < 0. Setting Q = 0." << std::endl;
+        Q = 0.0;
+    }
 
-   refPhasespacePoint.SetWeight(Q);
-   refPhasespacePoint.SetWeightError(fitResult->weightError);
+    refPhasespacePoint.SetWeight(Q);
+    refPhasespacePoint.SetWeightError(fitResult->weightError);
 
-   delete fitResult;
-   return true;
+    delete fitResult;
+    return true;
 }
 
 
 
 void WiBaS::SaveNextFitToFile(std::string fileName){
-   fitFunction->SaveNextFitToFile(fileName);
+
+    fitFunction->SaveNextFitToFile(fileName);
 }
 
 
 
 bool WiBaS::CheckMassInRange(PhasespacePoint &refPhasespacePoint) const {
-  double minMass = fitFunction->GetMinMass();
-  double maxMass = fitFunction->GetMaxMass();
 
-  if(refPhasespacePoint.GetMass() < minMass ||
-     refPhasespacePoint.GetMass() > maxMass)
-  {
+    double minMass = fitFunction->GetMinMass();
+    double maxMass = fitFunction->GetMaxMass();
+
+    if(refPhasespacePoint.GetMass() < minMass || refPhasespacePoint.GetMass() > maxMass){
      return false;
-  }
+    }
 
-  if(refPhasespacePoint.IsMass2Set() &&
-     (refPhasespacePoint.GetMass2() < minMass ||
-      refPhasespacePoint.GetMass2() > maxMass))
-  {
-     return false;
-  }
+    if(refPhasespacePoint.IsMass2Set() &&
+      (refPhasespacePoint.GetMass2() < minMass || refPhasespacePoint.GetMass2() > maxMass)){
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 
 
 void WiBaS::SetCalcErrors(bool set){
-  calcErrors = set;
-  fitFunction->SetCalcErrors(set);
+
+    calcErrors = set;
+    fitFunction->SetCalcErrors(set);
 }
 
 

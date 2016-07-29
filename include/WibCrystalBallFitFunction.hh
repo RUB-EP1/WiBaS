@@ -46,38 +46,38 @@ class RooPolynomial;
 
 class WibCrystalBallFitFunction : public WibFitFunction
 {
-public:
-  WibCrystalBallFitFunction(double particleMeanMass,
-			    double minMass, 
-			    double maxMass,
-			    unsigned int backgroundPolOrder,
-			    double sigmaStart,
-			    double sigmaMin,
-			    double sigmaMax,
-			    double alphaStart,
-			    double alphaMin,
-			    double alphaMax,
-			    int pn);
+    public:
+        WibCrystalBallFitFunction(double particleMeanMass,
+                                  double minMass,
+                                  double maxMass,
+                                  unsigned int backgroundPolOrder,
+                                  double sigmaStart,
+                                  double sigmaMin,
+                                  double sigmaMax,
+                                  double alphaStart,
+                                  double alphaMin,
+                                  double alphaMax,
+                                  int pn);
 
-  virtual ~WibCrystalBallFitFunction();
-  virtual FitResult* DoFitD(double eventMass, double eventMass2);
+        virtual ~WibCrystalBallFitFunction();
+        virtual FitResult* DoFitD(double eventMass, double eventMass2);
 
-protected:
-  virtual double ReturnCurrentQValue();
-  virtual void SaveFitToFile(std::string fileName);
-  virtual RooArgList GetParamList() const;
+    protected:
+        virtual double ReturnCurrentQValue();
+        virtual void SaveFitToFile(std::string fileName);
+        virtual RooArgList GetParamList() const;
 
-private:
-  RooRealVar* mean;
-  RooRealVar* sigma;
-  RooRealVar* a1;
-  RooRealVar* a2;
-  RooRealVar* sigshare;
-  RooRealVar* alpha;
-  RooRealVar* n;
+    private:
+        RooRealVar* mean;
+        RooRealVar* sigma;
+        RooRealVar* a1;
+        RooRealVar* a2;
+        RooRealVar* sigshare;
+        RooRealVar* alpha;
+        RooRealVar* n;
 
-  RooCBShape* cbFunction;
-  RooPolynomial* polFunction;
+        RooCBShape* cbFunction;
+        RooPolynomial* polFunction;
 };
 
 

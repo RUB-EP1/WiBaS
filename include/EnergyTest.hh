@@ -59,7 +59,7 @@ class EnergyTest : public PhasespacePointCloud
         void SetGauss2SigSq(double val){gauss2sigsq = val;}
         double GetPhi();
         double GetPhi(const std::vector<PhasespacePoint*>& phasespacePointVectorData,
-                     const std::vector<PhasespacePoint*>& phasespacePointVectorFit);
+                      const std::vector<PhasespacePoint*>& phasespacePointVectorFit);
         std::vector<double> GetResampledPhis(long n, short threads=1);
         void Threadfunc(long n, std::vector<double>& phis);
         void CalcNormsFromDistVariances();
@@ -75,12 +75,14 @@ class EnergyTest : public PhasespacePointCloud
 
 
 inline double EnergyTest::Rlog(double distance){
+
     return -log(distance + epsilon);
 }
 
 
 
 inline double EnergyTest::RGauss(double distance){
+
     return exp(-distance*distance / gauss2sigsq);
 }
 

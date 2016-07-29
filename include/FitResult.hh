@@ -43,23 +43,23 @@
 
 class FitResult
 {
- public:
-   double weight;
-   double weightError;
-   RooFitResult* rooFitResult;
+    public:
+        double weight;
+        double weightError;
+        RooFitResult* rooFitResult;
 
 
-  FitResult():
-    weight(0),
-    weightError(0),
-    rooFitResult(NULL)
-  {}
+    FitResult() :
+        weight(0),
+        weightError(0),
+        rooFitResult(NULL)
+    {}
 
-  ~FitResult(){
-    if(rooFitResult != NULL){
-       delete rooFitResult;
+    ~FitResult(){
+        if(rooFitResult != NULL){
+           delete rooFitResult;
+        }
     }
-  }
 };
 
 

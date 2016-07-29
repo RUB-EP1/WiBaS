@@ -57,26 +57,27 @@ PhasespaceCoord::PhasespaceCoord(unsigned short int id, double norm, bool isCirc
 
 
 void PhasespaceCoord::SetNorm(double norm){
+
     _norm = norm;
 }
 
 
 
-unsigned short int PhasespaceCoord::GetID() const
-{
+unsigned short int PhasespaceCoord::GetID() const {
+
     return _id;
 }
 
 
 
-bool PhasespaceCoord::GetIsCircular() const
-{
+bool PhasespaceCoord::GetIsCircular() const {
+
     return _isCircular;
 }
 
 
 
-double PhasespaceCoord::GetNorm() const
-{
+double PhasespaceCoord::GetNorm() const {
+
     return _norm;
 }

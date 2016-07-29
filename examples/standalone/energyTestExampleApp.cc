@@ -55,7 +55,7 @@ double GaussRand(double width, double mean){
 
 int main(){
 
-    // Create two test objects, one to test a bad "fit", 
+    // Create two test objects, one to test a bad "fit",
     // a second one to test a good fit
     EnergyTest energyTest1(EnergyTest::DISTANCE_GAUSS, true);
     EnergyTest energyTest2(EnergyTest::DISTANCE_GAUSS, true);
@@ -77,27 +77,27 @@ int main(){
     srand((unsigned)time(NULL));
 
     // Bad fit: the means of the two distributions differ by 0.2
-    for(int i=0; i< nData; i++){
-	PhasespacePoint newPoint;
-	newPoint.SetCoordinate("x", GaussRand(width, mean1));
-	energyTest1.AddPhasespacePointData(newPoint);
+    for(int i=0; i < nData; i++){
+        PhasespacePoint newPoint;
+        newPoint.SetCoordinate("x", GaussRand(width, mean1));
+        energyTest1.AddPhasespacePointData(newPoint);
     }
-    for(int i=0; i< nFit; i++){
-	PhasespacePoint newPoint;
-	newPoint.SetCoordinate("x", GaussRand(width, mean2));
-	energyTest1.AddPhasespacePointFit(newPoint);
+    for(int i=0; i < nFit; i++){
+        PhasespacePoint newPoint;
+        newPoint.SetCoordinate("x", GaussRand(width, mean2));
+        energyTest1.AddPhasespacePointFit(newPoint);
     }
 
     // Good fit: both data sets taken from same distribution
-    for(int i=0; i< nData; i++){
-	PhasespacePoint newPoint;
-	newPoint.SetCoordinate("x", GaussRand(width, mean2));
-	energyTest2.AddPhasespacePointData(newPoint);
+    for(int i=0; i < nData; i++){
+        PhasespacePoint newPoint;
+        newPoint.SetCoordinate("x", GaussRand(width, mean2));
+        energyTest2.AddPhasespacePointData(newPoint);
     }
-    for(int i=0; i< nFit; i++){
-	PhasespacePoint newPoint;
-	newPoint.SetCoordinate("x", GaussRand(width, mean2));
-	energyTest2.AddPhasespacePointFit(newPoint);
+    for(int i=0; i < nFit; i++){
+        PhasespacePoint newPoint;
+        newPoint.SetCoordinate("x", GaussRand(width, mean2));
+        energyTest2.AddPhasespacePointFit(newPoint);
     }
 
     // Calculate normalizations from distribution variances
@@ -125,7 +125,7 @@ int main(){
 
     for(auto x : resampledPhi1){
 	if(phiFit1 < x)
-	    pValue1 += 1;
+        pValue1 += 1;
     }
     for(auto x : resampledPhi2){
 	if(phiFit2 < x)

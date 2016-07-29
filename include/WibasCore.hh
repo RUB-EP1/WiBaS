@@ -72,6 +72,4 @@ class WiBaS : public PhasespacePointCloud
 
 
 
-
-
 #endif

@@ -49,34 +49,34 @@ class FitResult;
 
 class WibFitFunction
 {
-public:
-  WibFitFunction(double pminMass, double pmaxMass);
-  virtual ~WibFitFunction();
-  virtual FitResult* DoFitD(double eventMass, double eventMass2)=0;
-  void SetCalcErrors(bool set);
-  void SaveNextFitToFile(std::string fileName);
-  void AddData(const PhasespacePoint& phasespacePoint);
-  bool GetCalcError() const; 
-  double GetMinMass() const;
-  double GetMaxMass() const;
-  FitResult* DoFit(double eventMass, double eventMass2);
+    public:
+        WibFitFunction(double pminMass, double pmaxMass);
+        virtual ~WibFitFunction();
+        virtual FitResult* DoFitD(double eventMass, double eventMass2) = 0;
+        void SetCalcErrors(bool set);
+        void SaveNextFitToFile(std::string fileName);
+        void AddData(const PhasespacePoint& phasespacePoint);
+        bool GetCalcError() const;
+        double GetMinMass() const;
+        double GetMaxMass() const;
+        FitResult* DoFit(double eventMass, double eventMass2);
 
-protected:
-  virtual double ReturnCurrentQValue()=0;
-  virtual void SaveFitToFile(std::string fileName)=0;
-  virtual RooArgList GetParamList() const =0 ;
-  RooRealVar* mass;
-  RooRealVar* mass2;
-  RooRealVar* initialWeight;
-  RooDataSet* data;
-  RooAddPdf* totalIntensity;
+    protected:
+        virtual double ReturnCurrentQValue() = 0;
+        virtual void SaveFitToFile(std::string fileName) = 0;
+        virtual RooArgList GetParamList() const = 0 ;
+        RooRealVar* mass;
+        RooRealVar* mass2;
+        RooRealVar* initialWeight;
+        RooDataSet* data;
+        RooAddPdf* totalIntensity;
 
-private:
-  bool calcError; 
-  bool saveNextFitToFile;
-  double minMass;
-  double maxMass;
-  std::string saveNextFitFileName;
+    private:
+        bool calcError;
+        bool saveNextFitToFile;
+        double minMass;
+        double maxMass;
+        std::string saveNextFitFileName;
 };
 
 

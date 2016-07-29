@@ -47,38 +47,38 @@ class RooProdPdf;
 
 class WibVoigtFitFunction2D : public WibFitFunction
 {
-public:
-  WibVoigtFitFunction2D(double particleMeanMass,
-			double particleWidth,
-			double pminMass, 
-			double pmaxMass,
-			unsigned int backgroundPolOrder,
-			double voigtSigmaStart,
-			double voigtSigmaMin,
-			double voigtSigmaMax);
+    public:
+        WibVoigtFitFunction2D(double particleMeanMass,
+                              double particleWidth,
+                              double pminMass,
+                              double pmaxMass,
+                              unsigned int backgroundPolOrder,
+                              double voigtSigmaStart,
+                              double voigtSigmaMin,
+                              double voigtSigmaMax);
 
-  virtual ~WibVoigtFitFunction2D();
-  virtual FitResult* DoFitD(double eventMass, double eventMass2);
+        virtual ~WibVoigtFitFunction2D();
+        virtual FitResult* DoFitD(double eventMass, double eventMass2);
 
-protected:
-  virtual double ReturnCurrentQValue();
-  virtual void SaveFitToFile(std::string fileName);
-  virtual RooArgList GetParamList() const;
+    protected:
+        virtual double ReturnCurrentQValue();
+        virtual void SaveFitToFile(std::string fileName);
+        virtual RooArgList GetParamList() const;
 
-private:
-  RooRealVar* mean;
-  RooRealVar* sigma;
-  RooRealVar* gamma;
-  RooRealVar* a1;
-  RooRealVar* a2;
-  RooRealVar* sigshare;
+    private:
+        RooRealVar* mean;
+        RooRealVar* sigma;
+        RooRealVar* gamma;
+        RooRealVar* a1;
+        RooRealVar* a2;
+        RooRealVar* sigshare;
 
-  RooVoigtian* voigtFunction1;
-  RooVoigtian* voigtFunction2;
-  RooPolynomial* polFunction1;
-  RooPolynomial* polFunction2;
-  RooProdPdf* voigtFunctionProd;
-  RooProdPdf* polFunctionProd;
+        RooVoigtian* voigtFunction1;
+        RooVoigtian* voigtFunction2;
+        RooPolynomial* polFunction1;
+        RooPolynomial* polFunction2;
+        RooProdPdf* voigtFunctionProd;
+        RooProdPdf* polFunctionProd;
 };
 
 
