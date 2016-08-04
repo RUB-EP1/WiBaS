@@ -102,10 +102,6 @@ int main(){
         energyTest2.AddPhasespacePointFit(newPoint);
     }
 
-    // Calculate normalizations from distribution variances
-    energyTest1.CalcNormsFromDistVariances();
-    energyTest2.CalcNormsFromDistVariances();
-
     // Get the reference energies
     double phiFit1 = energyTest1.GetPhi();
     double phiFit2 = energyTest2.GetPhi();
