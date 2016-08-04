@@ -50,15 +50,15 @@ class PhasespacePointCloud
         PhasespacePointCloud(int numSubsets=1);
         virtual ~PhasespacePointCloud();
         void RegisterPhasespaceCoord(const std::string& name, double norm=1, bool isCircular=false);
+        void AddPhasespacePoint(PhasespacePoint& newPhasespacePoint, int subset=1);
+        void ArrangePointCoordinates(PhasespacePoint& point);
+        float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
 
         static const double Pi;
         static const bool IS_2PI_CIRCULAR;
 
     protected:
         std::ostream* _qout;
-        void AddPhasespacePoint(PhasespacePoint& newPhasespacePoint, int subset=1);
-        void ArrangePointCoordinates(PhasespacePoint& point);
-        float CalcPhasespaceDistance(PhasespacePoint* targetPoint, PhasespacePoint* refPoint);
         std::vector<PhasespacePoint*>& GetPointVector(int subset=1);
         std::map<std::string, PhasespaceCoord>& GetCoordNameMap();
 
